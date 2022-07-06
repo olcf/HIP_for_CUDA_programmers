@@ -1,0 +1,48 @@
+#------------------------------------------------------------------------------
+
+USE_GPU = YES
+
+ifeq ($(USE_GPU),YES)
+
+  CUDA_ROOT = $(OLCF_CUDA_ROOT)
+  CUDA_TARGET = ppc64le-linux
+
+  CC = nvcc
+  CFLAGS = -I$(MPI_ROOT)/include -DUSE_GPU
+  SRC = main.cu
+  OBJ = main.o
+
+  LD = mpiCC
+  LDFLAGS = -L$(CUDA_ROOT)/targets/$(CUDA_TARGET)/lib \
+            -Wl,-rpath=$(CUDA_ROOT)/targets/$(CUDA_TARGET)/lib \
+            -Wl,-rpath=$(CUDA_ROOT)/lib64 \
+            -lcublas -lcudart
+  EXEC = exec.gpu
+
+else
+
+  CC = mpiCC
+  CFLAGS = -std=c++11 -I$(OLCF_ESSL_ROOT)/include -include essl.h
+  SRC = main.cc
+  OBJ = main.o
+
+  LD = mpiCC
+
+  SMP_DIR = $(shell echo "$$(module -q load xl ; echo $$OLCF_XLSMP_ROOT/lib)")
+  XLF_DIR = $(shell echo "$$(module -q load xl ; echo $$OLCF_XLF_ROOT/lib)")
+  XL_DIR = $(shell echo "$$(module -q load xl ; echo $$OLCF_XL_ROOT/lib)")
+
+  LDFLAGS = -L$(OLCF_ESSL_ROOT)/lib64 -Wl,-rpath,$(OLCF_ESSL_ROOT)/lib64 -lesslsmp \
+    -lxlf90_r -lxl -lxlsmp -lxlfmath -L$(XLF_DIR) -L$(SMP_DIR) -Wl,-rpath,$(XL_DIR)
+  EXEC = exec.cpu
+
+endif
+
+all:
+	$(CC) -o $(OBJ) -c $(SRC) $(CFLAGS)
+	$(LD) -o $(EXEC) $(OBJ) $(LDFLAGS)
+
+distclean:
+	rm -f exec.gpu exec.cpu $(OBJ)
+
+#------------------------------------------------------------------------------
