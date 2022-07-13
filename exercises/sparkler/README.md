@@ -21,7 +21,7 @@ requires an installed BLAS library, preferably multithreaded if the runs
 use more than one core per MPI rank.
 
 To build for Summit, run `./make.sh` for CUDA GPU build, or `env USE_GPU=NO ./make.sh`
-for the CPU only build.
+for the CPU only build. 
 
 ## Running
 

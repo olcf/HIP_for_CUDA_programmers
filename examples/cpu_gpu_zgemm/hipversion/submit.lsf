@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#BSUB -P STF007
+#BSUB -J cpu_gpu_zgemm_hip 
+#BSUB -o cpu_gpu_zgemm_hip.%J
+#BSUB -nnodes 1
+#BSUB -W 10
+
+date
+
+echo "CUDA program output"
+jsrun -n1 -c1 -g1 -a1 ./cpu_gpu_zgemm_hip
+

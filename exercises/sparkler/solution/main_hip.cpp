@@ -1,4 +1,3 @@
-#include "hip/hip_runtime.h"
 //=============================================================================
 
 #include "cstdio"
@@ -11,7 +10,6 @@
 #include "mpi.h"
 
 #ifdef USE_GPU
-#include "hip/hip_runtime.h"
 #include "hip/hip_runtime.h"
 #include "hipblas.h"
 #include "hip/hip_fp16.h"
@@ -393,7 +391,7 @@ void perform_gemm(hipblasHandle_t accelblas_handle, size_t m, size_t n, size_t k
       , (void*)&beta
       , c_buf.d(), TCS::gemm_type_out(), c_buf.nru()
       , TCS::gemm_type_out()
-      , CUBLAS_GEMM_ALGO4_TENSOR_OP
+      , HIPBLAS_GEMM_DEFAULT // changing from CUBLAS_GEMM_ALGO4_TENSOR_OP as hip has no equivalent
     );
     if (status == HIPBLAS_STATUS_NOT_INITIALIZED) {
       printf("Error: HIPBLAS_STATUS_NOT_INITIALIZED\n");
@@ -476,10 +474,12 @@ void perform_run(size_t num_vector, size_t num_field, int num_iterations) {
 
   hipblasHandle_t accelblas_handle;
   SAFE_CALL_CUBLAS(hipblasCreate(&accelblas_handle));
-  if (compute_capability() >= 700) {
-    SAFE_CALL_CUBLAS(cublasSetMathMode(accelblas_handle,
-      CUBLAS_TENSOR_OP_MATH));
-  }
+// Commenting out cublasSetMathMode as we don't need this to tell the library to use tensor cores.
+// The library will decide that automatically
+//  if (compute_capability() >= 700) {
+//    SAFE_CALL_CUBLAS(cublasSetMathMode(accelblas_handle,
+//      CUBLAS_TENSOR_OP_MATH));
+//  }
   SAFE_CALL_CUBLAS(hipblasSetStream(accelblas_handle, stream));
 
   // Matrix setup.

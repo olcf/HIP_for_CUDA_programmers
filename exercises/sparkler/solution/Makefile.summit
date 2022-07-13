@@ -7,15 +7,19 @@ ifeq ($(USE_GPU),YES)
   HIP_ROOT = $(OLCF_HIP_CUDA_ROOT)
 
   CC = hipcc 
-  CFLAGS = -I$(MPI_ROOT)/include -DUSE_GPU
-  SRC = main.cu
+  CFLAGS = -I$(OLCF_HIP_CUDA_ROOT)/include -I$(MPI_ROOT)/include -DUSE_GPU
+  SRC = main_hip.cpp
   OBJ = main.o
 
   LD = mpiCC
-  LDFLAGS = -L$(HIP_ROOT)/lib \
-            -Wl,-rpath=$(HIP_ROOT)/lib \
-            -Wl,-rpath=$(HIP_ROOT)/lib \
-            -lcublas -lcudart
+#  LDFLAGS = -L$(HIP_ROOT)/lib \
+#            -L$(OLCF_CUDA_ROOT)/lib64 \
+#            -Wl,-rpath=$(HIP_ROOT)/lib \
+#            -Wl,-rpath=$(OLCF_CUDA_ROOT)/lib64 \
+#            -lhipblas
+ LDFLAGS = -L$(HIP_ROOT)/lib \
+           -L$(OLCF_CUDA_ROOT)/lib64 \
+            -lhipblas -lcublas -lcudart
   EXEC = exec.gpu
 
 else
