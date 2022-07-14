@@ -2,9 +2,13 @@
 #include <iostream>
 #include <string>
 #include <math.h>
-#include <essl.h>
 #include <hipblas.h>
 #include <getopt.h>
+#ifdef CRUSHER
+#include <cblas.h>
+#else
+#include <essl.h>
+#endif
 
 /* ---------------------------------------------------------------------------------
 Macro for checking errors in CUDA API calls

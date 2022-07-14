@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 // Macro for checking errors in CUDA API calls
-#define cudaErrorCheck(call)                                                              \
+#define gpuErrorCheck(call)                                                              \
 do{                                                                                       \
     hipError_t cuErr = call;                                                             \
     if(hipSuccess != cuErr){                                                             \
@@ -15,7 +15,7 @@ do{                                                                             
 #define N 1048576
 
 // Kernel
-__global__ void cudaAddVectors(double *a, double *b, double *c)
+__global__ void addVectors(double *a, double *b, double *c)
 {
 	int id = blockDim.x * blockIdx.x + threadIdx.x;
 	if(id < N) c[id] = a[id] + b[id];
@@ -34,9 +34,9 @@ int main()
 
 	// Allocate memory for arrays d_A, d_B, and d_C on device
 	double *d_A, *d_B, *d_C;
-	cudaErrorCheck( hipMalloc(&d_A, bytes) );	
-	cudaErrorCheck( hipMalloc(&d_B, bytes) );
-	cudaErrorCheck( hipMalloc(&d_C, bytes) );
+	gpuErrorCheck( hipMalloc(&d_A, bytes) );	
+	gpuErrorCheck( hipMalloc(&d_B, bytes) );
+	gpuErrorCheck( hipMalloc(&d_C, bytes) );
 
 	// Fill host arrays A, B, and C
 	for(int i=0; i<N; i++)
@@ -47,8 +47,8 @@ int main()
 	}
 
 	// Copy data from host arrays A and B to device arrays d_A and d_B
-	cudaErrorCheck( hipMemcpy(d_A, A, bytes, hipMemcpyHostToDevice) );
-	cudaErrorCheck( hipMemcpy(d_B, B, bytes, hipMemcpyHostToDevice) );
+	gpuErrorCheck( hipMemcpy(d_A, A, bytes, hipMemcpyHostToDevice) );
+	gpuErrorCheck( hipMemcpy(d_B, B, bytes, hipMemcpyHostToDevice) );
 
 	// Set execution configuration parameters
 	//		thr_per_blk: number of CUDA threads per grid block
@@ -57,19 +57,19 @@ int main()
 	int blk_in_grid = ceil( float(N) / thr_per_blk );
 
 	// Launch kernel
-	hipLaunchKernelGGL(add_vectors_cuda, blk_in_grid, thr_per_blk , 0, 0, d_A, d_B, d_C);
+	hipLaunchKernelGGL(addVectors, blk_in_grid, thr_per_blk , 0, 0, d_A, d_B, d_C);
 
   	// Check for errors in kernel launch (e.g. invalid execution configuration paramters)
-	hipError_t cudaErrSync  = hipGetLastError();
+	hipError_t gpuErrSync  = hipGetLastError();
 
   	// Check for errors on the GPU after control is returned to CPU
-	hipError_t cudaErrAsync = hipDeviceSynchronize();
+	hipError_t gpuErrAsync = hipDeviceSynchronize();
 
-	if (cudaErrSync != hipSuccess) { printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(cudaErrSync)); exit(0); }
-	if (cudaErrAsync != hipSuccess) { printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(cudaErrAsync)); exit(0); }
+	if (gpuErrSync != hipSuccess) { printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErrSync)); exit(0); }
+	if (gpuErrAsync != hipSuccess) { printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErrAsync)); exit(0); }
 
 	// Copy data from device array d_C to host array C
-	cudaErrorCheck( hipMemcpy(C, d_C, bytes, hipMemcpyDeviceToHost) );
+	gpuErrorCheck( hipMemcpy(C, d_C, bytes, hipMemcpyDeviceToHost) );
 
 	// Verify results
     double tolerance = 1.0e-14;
@@ -88,9 +88,9 @@ int main()
 	free(C);
 
 	// Free GPU memory
-	cudaErrorCheck( hipFree(d_A) );
-	cudaErrorCheck( hipFree(d_B) );
-	cudaErrorCheck( hipFree(d_C) );
+	gpuErrorCheck( hipFree(d_A) );
+	gpuErrorCheck( hipFree(d_B) );
+	gpuErrorCheck( hipFree(d_C) );
 
 	printf("\n---------------------------\n");
 	printf("__SUCCESS__\n");

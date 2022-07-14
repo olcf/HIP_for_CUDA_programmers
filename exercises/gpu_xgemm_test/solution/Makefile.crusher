@@ -1,0 +1,16 @@
+GPUCC    = hipcc
+CC       = cc
+
+INCLUDES  = -I$(MPICH_DIR)/include -I${OLCF_OPENBLAS_ROOT}/include -DCRUSHER
+LIBRARIES = -L${ROCM_PATH}/lib -lhipblas -lamdhip64 -L${OLCF_OPENBLAS_ROOT}/lib -lopenblas
+
+gpu_xgemm_hip: gpu_xgemm_hip.o
+	$(CC) $(LIBRARIES) gpu_xgemm_hip.o -o gpu_xgemm_hip
+
+gpu_xgemm_hip.o: gpu_xgemm_hip.cpp
+	$(GPUCC) $(INCLUDES) -c gpu_xgemm_hip.cpp
+
+.PHONY: clean
+
+clean:
+	rm -f gpu_xgemm_hip *.o

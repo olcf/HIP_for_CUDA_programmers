@@ -42,7 +42,7 @@ int main()
 	{
 		A[i] = 1.0;
 		B[i] = 2.0;
-        C[i] = 0.0;
+		C[i] = 0.0;
 	}
 
 	// Copy data from host arrays A and B to device arrays d_A and d_B
@@ -56,7 +56,7 @@ int main()
 	int blk_in_grid = ceil( float(N) / thr_per_blk );
 
 	// Launch kernel
-	add_vectors_cuda<<< blk_in_grid, thr_per_blk >>>(d_A, d_B, d_C);
+	cudaAddVectors<<< blk_in_grid, thr_per_blk >>>(d_A, d_B, d_C);
 
   	// Check for errors in kernel launch (e.g. invalid execution configuration paramters)
 	cudaError_t cudaErrSync  = cudaGetLastError();

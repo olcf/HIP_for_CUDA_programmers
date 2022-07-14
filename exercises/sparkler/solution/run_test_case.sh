@@ -33,8 +33,9 @@ function main
        launch_cmd="jsrun --nrs $num_proc --rs_per_host $num_proc --bind packed:7 \
                       --cpu_per_rs 7 --gpu_per_rs 1 --tasks_per_rs 1 -X 1"
    elif [[ $(hostname -d) == "crusher"*  ]]; then
-       module load rocm openblas/0.3.17-pthreads
-       launch_cmd="srun -N1 --ntasks $num_proc --gpus-per-task 1 --cpus-per-task 4"
+       module load rocm openblas/0.3.17-omp
+       export OMP_NUM_THREADS=8
+       launch_cmd="srun -N1 --ntasks $num_proc --gpus-per-task 1 --cpus-per-task 8"
    fi
 
   $launch_cmd ./$exec --num_vector $num_vector \

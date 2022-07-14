@@ -10,15 +10,18 @@ ifeq ($(USE_GPU),YES)
   SRC = main_hip.cpp
   OBJ = main.o
 
-  LD = hipcc
-  LDFLAGS = -L$(ROCM_PATH)/lib -lhipblas \
-            -L${MPICH_DIR}/lib -lmpi 
+#  LD = hipcc
+#  LDFLAGS = -L$(ROCM_PATH)/lib -lhipblas \
+#            -L${MPICH_DIR}/lib -lmpi 
+
+  LD = cc
+  LDFLAGS = -L$(ROCM_PATH)/lib -lhipblas -lamdhip64
   EXEC = exec.gpu
 
 else
 
   CC = cc
-  CFLAGS = -std=c++11  -I$(OLCF_OPENBLAS_ROOT)/include -include cblas.h
+  CFLAGS = -std=c++11 -I$(OLCF_OPENBLAS_ROOT)/include -include cblas.h
   SRC = main.cc
   OBJ = main.o
 

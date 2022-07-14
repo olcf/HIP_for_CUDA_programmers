@@ -34,7 +34,7 @@ int main()
 	{
 		A[i] = 1.0;
 		B[i] = 2.0;
-        C[i] = 0.0;
+		C[i] = 0.0;
 	}
 
 	// Copy data from host arrays A and B to device arrays d_A and d_B
@@ -42,7 +42,7 @@ int main()
 	hipMemcpy(d_B, B, bytes, hipMemcpyHostToDevice);
 
 	// Set execution configuration parameters
-	//		thr_per_blk: number of CUDA threads per grid block
+	//		thr_per_blk: number of CUDA threads per block
 	//		blk_in_grid: number of blocks in grid
 	int thr_per_blk = 256;
 	int blk_in_grid = ceil( float(N) / thr_per_blk );
