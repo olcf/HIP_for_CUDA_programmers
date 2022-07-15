@@ -40,18 +40,18 @@ void assert_(const char* condition_string, const char* file, int line) {
 
 #ifdef USE_GPU
 
-#define SAFE_CALL_CUDA(call) \
+#define SAFE_CALL_GPU(call) \
  {hipError_t errcode = call; \
   ASSERT(hipSuccess == errcode && "Failure in call: " #call);}
 
-#define SAFE_CALL_CUBLAS(call) \
+#define SAFE_CALL_GPUBLAS(call) \
  {hipblasStatus_t errcode = call; \
   ASSERT(HIPBLAS_STATUS_SUCCESS == errcode && "Failure in call: " #call);}
 
 #else
 
-#define SAFE_CALL_CUDA(call) {}
-#define SAFE_CALL_CUBLAS(call) {}
+#define SAFE_CALL_GPU(call) {}
+#define SAFE_CALL_GPUBLAS(call) {}
 
 #endif
 
@@ -188,12 +188,12 @@ class Matrix {
       , sizeP(sizeof(P)) {
 
 #ifdef USE_GPU
-      SAFE_CALL_CUDA(hipHostMalloc((void**)&h_, num_elt_up_ * sizeP));
+      SAFE_CALL_GPU(hipHostMalloc((void**)&h_, num_elt_up_ * sizeP));
       ASSERT(h_ && "Failure in host memory allocation");
       memset((void*)h_, 0, num_elt_up_ * sizeP);
-      SAFE_CALL_CUDA(hipMalloc((void**)&d_, num_elt_up_ * sizeP));
+      SAFE_CALL_GPU(hipMalloc((void**)&d_, num_elt_up_ * sizeP));
       ASSERT(d_ && "Failure in device memory allocation");
-      SAFE_CALL_CUDA(hipMemset((void*)h_, 0, num_elt_up_ * sizeP));
+      SAFE_CALL_GPU(hipMemset((void*)h_, 0, num_elt_up_ * sizeP));
 #else
       h_ = (P*)malloc(num_elt_up_ * sizeP);
       ASSERT(h_ && "Failure in host memory allocation");
@@ -206,8 +206,8 @@ class Matrix {
 
     ~Matrix() {
 #ifdef USE_GPU
-      SAFE_CALL_CUDA(hipHostFree(h_));
-      SAFE_CALL_CUDA(hipFree(d_));
+      SAFE_CALL_GPU(hipHostFree(h_));
+      SAFE_CALL_GPU(hipFree(d_));
 #else
       free(h_);
 #endif
@@ -239,14 +239,14 @@ class Matrix {
     //----------
 
     void to_device(hipStream_t stream) {
-      SAFE_CALL_CUDA(hipMemcpyAsync(d_, h_, num_elt_up_ * sizeP,
+      SAFE_CALL_GPU(hipMemcpyAsync(d_, h_, num_elt_up_ * sizeP,
         hipMemcpyHostToDevice, stream));
     }
 
     //----------
 
     void from_device(hipStream_t stream) {
-      SAFE_CALL_CUDA(hipMemcpyAsync(h_, d_, num_elt_up_ * sizeP,
+      SAFE_CALL_GPU(hipMemcpyAsync(h_, d_, num_elt_up_ * sizeP,
         hipMemcpyDeviceToHost, stream));
     }
 
@@ -304,7 +304,7 @@ __host__ __device__ size_t nonzero_stride(const size_t& i) {
 
 //-----------------------------------------------------------------------------
 
-/// CUDA kernel for set_input_matrix.
+/// HIP kernel for set_input_matrix.
 
 #ifdef USE_GPU
 template<class Matrix_t>
@@ -374,7 +374,7 @@ void perform_gemm(hipblasHandle_t accelblas_handle, size_t m, size_t n, size_t k
   Matrix<GemmOut_t>& c_buf) {
 
 #ifdef USE_GPU
-  // cuBLAS case.
+  // hipBLAS case.
 
   const GemmOut_t alpha = TCBufTypes<GemmOut_t>::one();
   const GemmOut_t beta = TCBufTypes<GemmOut_t>::zero();
@@ -470,17 +470,17 @@ void perform_run(size_t num_vector, size_t num_field, int num_iterations) {
   // CUDA initializations.
 
   hipStream_t stream;
-  SAFE_CALL_CUDA(hipStreamCreate(&stream));
+  SAFE_CALL_GPU(hipStreamCreate(&stream));
 
   hipblasHandle_t accelblas_handle;
-  SAFE_CALL_CUBLAS(hipblasCreate(&accelblas_handle));
-// Commenting out cublasSetMathMode as we don't need this to tell the library to use tensor cores.
+  SAFE_CALL_GPUBLAS(hipblasCreate(&accelblas_handle));
+// Commenting out cublasSetMathMode as it is not supported in HIP.
 // The library will decide that automatically
 //  if (compute_capability() >= 700) {
-//    SAFE_CALL_CUBLAS(cublasSetMathMode(accelblas_handle,
+//    SAFE_CALL_GPUBLAS(cublasSetMathMode(accelblas_handle,
 //      CUBLAS_TENSOR_OP_MATH));
 //  }
-  SAFE_CALL_CUBLAS(hipblasSetStream(accelblas_handle, stream));
+  SAFE_CALL_GPUBLAS(hipblasSetStream(accelblas_handle, stream));
 
   // Matrix setup.
 
@@ -515,7 +515,7 @@ void perform_run(size_t num_vector, size_t num_field, int num_iterations) {
 
     for (int step = 1; step <= num_steps; ++step) {
 
-      SAFE_CALL_CUDA(hipStreamSynchronize(stream));
+      SAFE_CALL_GPU(hipStreamSynchronize(stream));
       SAFE_CALL_MPI(MPI_Barrier(MPI_COMM_WORLD));
       const double timetotal2 = get_time();
       const double timetotal= timetotal2 - timetotal1;
@@ -552,7 +552,7 @@ void perform_run(size_t num_vector, size_t num_field, int num_iterations) {
         fflush(stdout);
       }
 
-      SAFE_CALL_CUDA(hipStreamSynchronize(stream));
+      SAFE_CALL_GPU(hipStreamSynchronize(stream));
       SAFE_CALL_MPI(MPI_Barrier(MPI_COMM_WORLD));
       const double timegemm1 = get_time();
 
@@ -562,7 +562,7 @@ void perform_run(size_t num_vector, size_t num_field, int num_iterations) {
         flops_local += 2. * m * n * k;
       } // if is_step_active
 
-      SAFE_CALL_CUDA(hipStreamSynchronize(stream));
+      SAFE_CALL_GPU(hipStreamSynchronize(stream));
       SAFE_CALL_MPI(MPI_Barrier(MPI_COMM_WORLD));
       const double timegemm2 = get_time();
 
@@ -577,7 +577,7 @@ void perform_run(size_t num_vector, size_t num_field, int num_iterations) {
 
       if (is_step_active) {
         c_buf.from_device(stream);
-        SAFE_CALL_CUDA(hipStreamSynchronize(stream));
+        SAFE_CALL_GPU(hipStreamSynchronize(stream));
 
         const int check_freq1 = 89; // spot check, for speed.
         const int check_freq2 = 113;
@@ -636,7 +636,7 @@ void perform_run(size_t num_vector, size_t num_field, int num_iterations) {
   SAFE_CALL_MPI(MPI_Allreduce(&hash_local, &hash, 1,
                            MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD));
 
-  SAFE_CALL_CUDA(hipStreamSynchronize(stream));
+  SAFE_CALL_GPU(hipStreamSynchronize(stream));
   SAFE_CALL_MPI(MPI_Barrier(MPI_COMM_WORLD));
   const double timetotal2 = get_time();
   const double timetotal= timetotal2 - timetotal1;
@@ -648,8 +648,8 @@ void perform_run(size_t num_vector, size_t num_field, int num_iterations) {
 
   // Finish.
 
-  SAFE_CALL_CUBLAS(hipblasDestroy(accelblas_handle));
-  SAFE_CALL_CUDA(hipStreamDestroy(stream));
+  SAFE_CALL_GPUBLAS(hipblasDestroy(accelblas_handle));
+  SAFE_CALL_GPU(hipStreamDestroy(stream));
 }
 
 //-----------------------------------------------------------------------------

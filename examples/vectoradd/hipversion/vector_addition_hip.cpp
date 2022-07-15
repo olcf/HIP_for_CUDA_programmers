@@ -4,9 +4,9 @@
 // Macro for checking errors in CUDA API calls
 #define gpuErrorCheck(call)                                                              \
 do{                                                                                       \
-    hipError_t cuErr = call;                                                             \
-    if(hipSuccess != cuErr){                                                             \
-      printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(cuErr));\
+    hipError_t gpuErr = call;                                                             \
+    if(hipSuccess != gpuErr){                                                             \
+      printf("HIP Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErr));\
       exit(0);                                                                            \
     }                                                                                     \
 }while(0)

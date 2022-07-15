@@ -10,11 +10,11 @@ Written by Tom Papatheodore
 #include <hipblas.h>
 
 // Macro for checking errors in CUDA API calls
-#define cudaErrorCheck(call)                                                              \
+#define gpuErrorCheck(call)                                                              \
 do{                                                                                       \
-    hipError_t cuErr = call;                                                             \
-    if(hipSuccess != cuErr){                                                             \
-        printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(cuErr));\
+    hipError_t gpuErr = call;                                                             \
+    if(hipSuccess != gpuErr){                                                             \
+        printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErr));\
         exit(0);                                                                            \
     }                                                                                     \
 }while(0)
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 {
 
     // Set device to GPU 0
-    cudaErrorCheck( hipSetDevice(0) );
+    gpuErrorCheck( hipSetDevice(0) );
 
     /* Allocate memory for A, B, C on CPU ----------------------------------------------*/
     double *A = (double*)malloc(N*N*sizeof(double));
@@ -48,14 +48,14 @@ int main(int argc, char *argv[])
 
     /* Allocate memory for d_A, d_B, d_C on GPU ----------------------------------------*/
     double *d_A, *d_B, *d_C;
-    cudaErrorCheck( hipMalloc(&d_A, N*N*sizeof(double)) );
-    cudaErrorCheck( hipMalloc(&d_B, N*N*sizeof(double)) );
-    cudaErrorCheck( hipMalloc(&d_C, N*N*sizeof(double)) );
+    gpuErrorCheck( hipMalloc(&d_A, N*N*sizeof(double)) );
+    gpuErrorCheck( hipMalloc(&d_B, N*N*sizeof(double)) );
+    gpuErrorCheck( hipMalloc(&d_C, N*N*sizeof(double)) );
 
     /* Copy host arrays (A,B,C) to device arrays (d_A,d_B,d_C) -------------------------*/
-    cudaErrorCheck( hipMemcpy(d_A, A, N*N*sizeof(double), hipMemcpyHostToDevice) );
-    cudaErrorCheck( hipMemcpy(d_B, B, N*N*sizeof(double), hipMemcpyHostToDevice) );
-    cudaErrorCheck( hipMemcpy(d_C, C, N*N*sizeof(double), hipMemcpyHostToDevice) );	
+    gpuErrorCheck( hipMemcpy(d_A, A, N*N*sizeof(double), hipMemcpyHostToDevice) );
+    gpuErrorCheck( hipMemcpy(d_B, B, N*N*sizeof(double), hipMemcpyHostToDevice) );
+    gpuErrorCheck( hipMemcpy(d_C, C, N*N*sizeof(double), hipMemcpyHostToDevice) );	
 
     /* Perform Matrix Multiply on CPU --------------------------------------------------*/
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 
     // Copy values of d_C (computed on GPU) into host array C_fromGPU	
     double *C_fromGPU = (double*)malloc(N*N*sizeof(double));	
-    cudaErrorCheck( hipMemcpy(C_fromGPU, d_C, N*N*sizeof(double), hipMemcpyDeviceToHost) );
+    gpuErrorCheck( hipMemcpy(C_fromGPU, d_C, N*N*sizeof(double), hipMemcpyDeviceToHost) );
 
     // Check if CPU and GPU give same results
     double tolerance = 1.0e-13;
@@ -97,9 +97,9 @@ int main(int argc, char *argv[])
     hipblasDestroy(handle);
 
     // Free GPU memory
-    cudaErrorCheck( hipFree(d_A) );
-    cudaErrorCheck( hipFree(d_B) );
-    cudaErrorCheck( hipFree(d_C) );
+    gpuErrorCheck( hipFree(d_A) );
+    gpuErrorCheck( hipFree(d_B) );
+    gpuErrorCheck( hipFree(d_C) );
 
     // Free CPU memory
     free(A);

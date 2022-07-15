@@ -1,5 +1,3 @@
-#------------------------------------------------------------------------------
-
 USE_GPU = YES
 
 ifeq ($(USE_GPU),YES)
@@ -12,11 +10,13 @@ ifeq ($(USE_GPU),YES)
   OBJ = main.o
 
   LD = mpiCC
+
 #  LDFLAGS = -L$(HIP_ROOT)/lib \
 #            -L$(OLCF_CUDA_ROOT)/lib64 \
 #            -Wl,-rpath=$(HIP_ROOT)/lib \
 #            -Wl,-rpath=$(OLCF_CUDA_ROOT)/lib64 \
 #            -lhipblas
+
  LDFLAGS = -L$(HIP_ROOT)/lib \
            -L$(OLCF_CUDA_ROOT)/lib64 \
             -lhipblas -lcublas -lcudart
@@ -48,4 +48,3 @@ all:
 distclean:
 	rm -f exec.gpu exec.cpu $(OBJ)
 
-#------------------------------------------------------------------------------

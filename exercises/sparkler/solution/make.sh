@@ -2,7 +2,7 @@
 
 echo $USE_GPU
 if [[ $(hostname -d) == "summit"* ]]; then
-module -q load gcc cuda/11.4.0 essl hip-cuda
+module -q load gcc cuda/11.5.2 essl hip-cuda
 make -f Makefile.summit distclean
 make -f Makefile.summit USE_GPU=${USE_GPU:-YES}
 elif [[ $(hostname -d) == "crusher"* ]]; then

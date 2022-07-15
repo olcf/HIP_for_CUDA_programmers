@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Macro for checking errors in CUDA API calls
+// Macro for checking errors in HIP  API calls
 #define hipErrorCheck(call)                                                              \
 do{                                                                                       \
-    hipError_t cuErr = call;                                                             \
-    if(hipSuccess != cuErr){                                                             \
-      printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(cuErr));\
+    hipError_t hipErr = call;                                                             \
+    if(hipSuccess != hipErr){                                                             \
+      printf("HIP Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(hipErr));\
       exit(0);                                                                            \
     }                                                                                     \
 }while(0)

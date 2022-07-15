@@ -11,7 +11,7 @@
 #endif
 
 /* ---------------------------------------------------------------------------------
-Macro for checking errors in CUDA API calls
+Macro for checking errors in HIP API calls
 ----------------------------------------------------------------------------------*/
 #define hipErrorCheck(call)                                                                 \
 do{                                                                                          \
@@ -24,7 +24,7 @@ do{                                                                             
 
 
 /* ---------------------------------------------------------------------------------
-Macro for checking success in cuBLAS API calls
+Macro for checking success in hipBLAS API calls
 ----------------------------------------------------------------------------------*/
 #define hipblasCheck(call)                                       \
 do{                                                             \
@@ -235,7 +235,7 @@ void xgemm_test(T machine_eps){
     // version of the wrapper will be used.
     host_xgemm(alpha, beta, test_A, test_B, test_C);
 
-    // Create cuBLAS handle
+    // Create hipBLAS handle
     hipblasHandle_t handle;
     hipblasCheck( hipblasCreate(&handle) );
 

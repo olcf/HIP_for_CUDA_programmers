@@ -13,6 +13,11 @@ Sparkler is licensed under the CoMet license; see https://github.com/wdj/comet.
 This directory holds a modified version of the original Sparkler miniapp, with
 only the Summit compilation and CUDA versions updated.
 
+## Task
+
+Hipify the main.cu, modify the Makefile, build and run the code. See below for
+how to run the test cases.
+
 ## Building
 
 The build requires MPI and make.  The default build requires CUDA 9.2 or

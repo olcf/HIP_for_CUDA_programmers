@@ -49,7 +49,7 @@ Command-line options:
 Example:
 
 ```
-jsrun -n 2 ./exec.gpu --num_vector 1000 --num_field 2000 --num_iterations 2
+jsrun -n 2 -g 1 ./exec.gpu --num_vector 1000 --num_field 2000 --num_iterations 2
 ```
 
 See below for how to run the test cases. 

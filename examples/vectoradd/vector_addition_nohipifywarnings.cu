@@ -5,7 +5,7 @@
 #define N 1048576
 
 // Kernel
-__global__ void add_vectors_cuda(double *a, double *b, double *c)
+__global__ void add_vectors(double *a, double *b, double *c)
 {
 	int id = blockDim.x * blockIdx.x + threadIdx.x;
 	if(id < N) c[id] = a[id] + b[id];
@@ -47,7 +47,7 @@ int main()
 	int blk_in_grid = ceil( float(N) / thr_per_blk );
 
 	// Launch kernel
-	add_vectors_cuda<<< blk_in_grid, thr_per_blk >>>(d_A, d_B, d_C);
+	add_vectors<<< blk_in_grid, thr_per_blk >>>(d_A, d_B, d_C);
 
   	// Check for errors in kernel launch (e.g. invalid execution configuration paramters)
 	cudaError_t deviceErrSync  = cudaGetLastError();

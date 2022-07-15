@@ -29,7 +29,7 @@ function main
   esac
 
    if [[ $(hostname -d) == "summit"* ]]; then
-       module load cuda/11.4.0 hip-cuda gcc
+       module load cuda/11.5.2 hip-cuda gcc
        launch_cmd="jsrun --nrs $num_proc --rs_per_host $num_proc --bind packed:7 \
                       --cpu_per_rs 7 --gpu_per_rs 1 --tasks_per_rs 1 -X 1"
    elif [[ $(hostname -d) == "crusher"*  ]]; then

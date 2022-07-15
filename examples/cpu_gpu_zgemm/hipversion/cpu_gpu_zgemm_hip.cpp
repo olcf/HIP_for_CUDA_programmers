@@ -8,15 +8,16 @@ Written by Tom Papatheodore
 #include <stdio.h>
 #include <essl.h>
 #include <hipblas.h>
+#include <cublas_v2.h>
 #include <hip/hip_complex.h>
 #include <complex.h>
 
 // Macro for checking errors in CUDA API calls
 #define gpuErrorCheck(call)                                                              \
 do{                                                                                       \
-    hipError_t cuErr = call;                                                             \
-    if(hipSuccess != cuErr){                                                             \
-        printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(cuErr));\
+    hipError_t gpuErr = call;                                                             \
+    if(hipSuccess != gpuErr){                                                             \
+        printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErr));\
         exit(0);                                                                            \
     }                                                                                     \
 }while(0)
@@ -66,33 +67,42 @@ int main(int argc, char *argv[])
     const complexd alpha = complexd(1.0, 1.0);
     const complexd beta = complexd(0.0, 0.0);
 
-    const hipDoubleComplex cualpha = make_hipDoubleComplex(1.0, 1.0);
-    const hipDoubleComplex cubeta = make_hipDoubleComplex(0.0, 0.0);
+    const hipDoubleComplex gpualpha = make_hipDoubleComplex(1.0, 1.0);
+    const hipDoubleComplex gpubeta = make_hipDoubleComplex(0.0, 0.0);
 
     zgemm("n", "n", N, N, N, alpha, A, N, B, N, beta, C, N);
 
     /* Perform Matrix Multiply on GPU --------------------------------------------------*/
 
+#ifdef USE_CUDA
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+
+    cublasStatus_t status = cublasZgemm3m(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, N, N, &gpualpha, d_A, N, d_B, N, &gpubeta, d_C, N);
+    if (status != CUBLAS_STATUS_SUCCESS){
+        printf("cublasZgemm3m failed with code %d\n", status);
+        return EXIT_FAILURE;
+    }
+#else
     hipblasHandle_t handle;
     hipblasCreate(&handle);
-
     // Replacing cublasZgemm3m with hipblasZgemm as HIP doesn't have an implementation of cublasZgemm3m
-    // hipblasStatus_t status = cublasZgemm3m(handle, HIPBLAS_OP_N, HIPBLAS_OP_N, N, N, N, &cualpha, d_A, N, d_B, N, &cubeta, d_C, N);
     hipblasStatus_t status = hipblasZgemm(handle, HIPBLAS_OP_N, HIPBLAS_OP_N, N, N, N, 
-	(hipblasDoubleComplex*)&cualpha,
+	(hipblasDoubleComplex*)&gpualpha,
 	(hipblasDoubleComplex*)d_A,
 	N, 
 	(hipblasDoubleComplex*)d_B, 
 	N, 
-	(hipblasDoubleComplex*)&cubeta, 
+	(hipblasDoubleComplex*)&gpubeta, 
 	(hipblasDoubleComplex*)d_C, 
 	N);
     if (status != HIPBLAS_STATUS_SUCCESS){
         printf("hipblasZgemm failed with code %d\n", status);
         return EXIT_FAILURE;
     }
+#endif
 
-	/* Copy values of d_C back from GPU and compare with values calculated on CPU ------*/
+    /* Copy values of d_C back from GPU and compare with values calculated on CPU ------*/
 
     // Copy values of d_C (computed on GPU) into host array C_fromGPU	
     complexd *C_fromGPU = (complexd*)malloc(N*N*sizeof(complexd));	
