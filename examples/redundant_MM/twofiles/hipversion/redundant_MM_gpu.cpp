@@ -1,5 +1,6 @@
 #include <hipblas.h>
 #include <stdio.h>
+#include <math.h>
 #include "mm_gpu.h"
 
 // Macro for checking errors in CUDA API calls

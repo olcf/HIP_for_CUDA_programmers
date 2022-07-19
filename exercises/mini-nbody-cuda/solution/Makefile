@@ -1,4 +1,4 @@
-GPUCOMP  = hipcc
+GPUCOMP  = hipcc -ccbin xlc++_r -Xcompiler -std=c++11
 
 mini-nbody_hip: mini-nbody_hip.o
 	${GPUCOMP} mini-nbody_hip.o -o mini-nbody_hip

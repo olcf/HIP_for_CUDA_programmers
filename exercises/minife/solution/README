@@ -1,0 +1,12 @@
+# miniFE
+
+Based on https://github.com/Mantevo/miniFE
+
+## To build
+
+$ module load gcc cuda
+$ cd src
+$ make
+
+## To run a test
+$ bsub submit.lsf

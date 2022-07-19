@@ -1,0 +1,5 @@
+# Matrix multiplication
+
+Very basic matrix multiplication GPU kernel. 
+
+Compile with `hipcc -o  matrix_multiply matrix_multiply.cu`

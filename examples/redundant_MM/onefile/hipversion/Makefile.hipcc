@@ -1,13 +1,16 @@
-CUCOMP  = hipcc -ccbin gcc
+#GPUCOMP  = hipcc 
+GPUCOMP  = hipcc -ccbin xlc++_r
+#GPUCOMP  = hipcc -ccbin pgc++ 
 
 INCLUDES  = -I$(OMPI_DIR)/include -I$(OLCF_ESSL_ROOT)/include -I$(OLCF_HIP_CUDA_ROOT)/include
 LIBRARIES = -L$(OMPI_DIR)/lib -L$(OLCF_ESSL_ROOT)/lib64 -L$(OLCF_HIP_CUDA_ROOT)/lib -lmpi_ibm -lessl -lhipblas
 
 redundant_mm: redundant_MM.o
-	$(CUCOMP) $(LIBRARIES) redundant_MM.o -o redundant_mm
+	$(GPUCOMP) $(LIBRARIES) -o redundant_mm redundant_MM.o 
 
 redundant_MM.o: redundant_MM.cpp
-	$(CUCOMP) $(INCLUDES) -c redundant_MM.cpp
+	$(GPUCOMP) $(INCLUDES) -c redundant_MM.cpp 
+#	$(GPUCOMP) -Xcompiler -x -Xcompiler c++ $(INCLUDES) -c redundant_MM.cpp 
 
 .PHONY: clean cleanall
 

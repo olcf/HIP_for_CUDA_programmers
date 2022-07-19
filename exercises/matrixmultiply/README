@@ -1,3 +1,9 @@
 # Matrix multiplication
 
-Compile with "nvcc -o 
+Very basic matrix multiplication GPU kernel. 
+
+Compile with `nvcc -o  matrix_multiply matrix_multiply.cu`
+
+## Task
+
+Hipify the code with hipify-perl and try to run the hipified code as a job.

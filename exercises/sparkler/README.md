@@ -54,7 +54,7 @@ Example:
 jsrun -n 2 ./exec.gpu --num_vector 1000 --num_field 2000 --num_iterations 2
 ```
 
-See below for how to run the test cases. 
+See below for how to run the test cases, which is probably the simplest way to run. 
 
 Reported values are:
 - TF - teraflops, total number of GEMM floating point operations

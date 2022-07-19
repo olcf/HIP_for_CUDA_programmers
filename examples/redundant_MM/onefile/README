@@ -22,7 +22,7 @@ The following modules must be loaded to compile AND to run this program:
 
 Compiling
 ---------
-After loading the modules mentioned above, just type `make`.
+After loading the modules mentioned above, just type `make -f Makefile.nvcc` or `make -f Makefile.mpicc` 
 
 
 Running
@@ -42,6 +42,13 @@ For example, the following jsrun line will run 6 resource sets, each with 1 MPI 
   Rank 003, HWThread 000, GPU 0, Node h41n10 - Total Time: 5.862273 GPU Time: 2.814339
   Rank 004, HWThread 005, GPU 1, Node h41n10 - Total Time: 5.798143 GPU Time: 2.765094
   Rank 005, HWThread 010, GPU 2, Node h41n10 - Total Time: 5.746687 GPU Time: 2.785626
+
+See the submit.lsf for an example submission.
+
+Hipifying
+---------
+
+Hipify the code with `hipify-perl redundant_MM.cu > redundant_MM_hip.cpp` and then fix any of the warnings.
 
 
 ADDITIONAL NOTES

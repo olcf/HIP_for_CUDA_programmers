@@ -1,4 +1,4 @@
-CUCOMP  = nvcc
+CUCOMP  = nvcc 
 BLAS = cublas
 CUFLAGS = -arch=sm_70
 

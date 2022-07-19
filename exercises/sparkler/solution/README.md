@@ -20,6 +20,10 @@ higher for NVIDIA GPUs.  An alternative build path for CPU-only execution
 requires an installed BLAS library, preferably multithreaded if the runs
 use more than one core per MPI rank.
 
+Make sure you load the required modules `module load cuda/11.5.2 hip-cuda essl`
+
+For crusher load `module load rocm openblas/0.3.17-omp`
+
 To build for Summit, run `./make.sh` for CUDA GPU build, or `env USE_GPU=NO ./make.sh`
 for the CPU only build. 
 To build for Crusher, do the same as above. The crusher version will use openblas instead of
@@ -63,7 +67,8 @@ Reported values are:
 
 ## Competition Test Cases:
 
-Start an interactive job first. 
+Start an interactive job first. Also see the submit.lsf file for batch
+submission.
 
 In the interactive job, the four competition test cases can be run by
 

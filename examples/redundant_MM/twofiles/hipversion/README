@@ -18,13 +18,20 @@ Environment Setup
 The following modules must be loaded to compile AND to run this program:
 	essl
 	cuda/11.5.2
-	gcc
 	hip-cuda	
+	gcc
+
+THe following module needs to be loaded if you wish to use IBM's xl compiler:
+	xl
 
 
 Compiling
 ---------
-After loading the modules mentioned above, just type `make`.
+If you wish to compile with xl as the underlying compiler, also modify the Makefile to use `hipcc -ccbin xlc++_r`
+and also make sure to pass the `-Xcompiler -x -Xcompiler c++` to the hipcc during the GPU code compilation. See
+the Makefiles for an example.
+
+After loading the modules mentioned above, just type `make -f Makefile.mpicclink` or `make -f Makefile.hipcclink`.
 
 
 Running

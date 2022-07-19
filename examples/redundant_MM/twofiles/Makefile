@@ -1,4 +1,5 @@
 CUCOMP  = nvcc
+#CUCOMP  = nvcc -ccbin xlc++_r
 MPICOMP = mpicxx
 CUFLAGS = -arch=sm_70
 
@@ -11,8 +12,8 @@ redundant_mm: redundant_MM.o redundant_MM_gpu.o
 redundant_MM_gpu.o: redundant_MM_gpu.cu
 	${CUCOMP} ${CUFLAGS}  -o redundant_MM_gpu.o -c redundant_MM_gpu.cu
 
-redundant_MM.o: redundant_MM.c
-	${MPICOMP} ${INCLUDES} -o redundant_MM.o -c redundant_MM.c
+redundant_MM.o: redundant_MM.cpp
+	${MPICOMP} ${INCLUDES} -o redundant_MM.o -c redundant_MM.cpp
 
 .PHONY: clean cleanall
 

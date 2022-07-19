@@ -1,0 +1,13 @@
+#!/bin/bash
+# Begin LSF Directives
+#BSUB -P STF007 
+#BSUB -W 0:10
+#BSUB -q batch 
+#BSUB -nnodes 1
+#BSUB -J minife  
+#BSUB -o minife.%J
+#BSUB -e minife.%J
+
+
+jsrun -n6 -a1 -c7 -g1 -bpacked:7 src/miniFE.x nx=100 ny=100 nz=100 verify_solution=1
+

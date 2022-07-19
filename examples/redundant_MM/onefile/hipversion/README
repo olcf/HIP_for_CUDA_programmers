@@ -16,17 +16,27 @@ Written by Tom Papatheodore (papatheodore@ornl.gov)
 Environment Setup
 -----------------
 The following modules must be loaded to compile AND to run this program:
-	gcc
 	essl
 	cuda/11.5.2
 	hip-cuda
+	gcc
+
+To use xl as your compiler, you need to `module load xl`.
 
 
 
 Compiling
 ---------
-After loading the modules mentioned above, just type either `make -f Makefile.hipcc` or `make -f Makefile.mpicc`.
+If you wish to compile with xl as the underlying compiler, also 
+modify the Makefile to use `hipcc -ccbin xlc++_r`
+and also make sure to pass the `-Xcompiler -x -Xcompiler c++` 
+to the hipcc during the GPU code compilation. See
+the Makefiles for an example.
 
+After loading the modules mentioned above, just type `make -f Makefile.hipcc` which will
+compile and link with hipcc. Running
+`make -f Makefile.mpicc` will not work because using `OMPI_CC=hipcc`
+is not supported by the mpi compiler wrapper.
 
 Running
 -------

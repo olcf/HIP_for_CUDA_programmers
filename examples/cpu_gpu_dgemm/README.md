@@ -3,5 +3,7 @@ This program will fill 2 NxN matrices with random numbers, compute a matrix mult
 Make sure you load the following modules
 
 ```
-module load cuda/11.4.0 hip-cuda essl
+module load cuda/11.5.2 hip-cuda essl
 ```
+
+To compile, simply run `make`
