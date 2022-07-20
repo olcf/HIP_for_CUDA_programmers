@@ -70,7 +70,7 @@ assemble_FE_data(const simple_mesh_description<typename MatrixType::GlobalOrdina
   if (local_elem_box[1][1] < global_elems_y) local_elem_box[1][1] += ghost;
   if (local_elem_box[2][1] < global_elems_z) local_elem_box[2][1] += ghost;
 
-  perform_element_loop_cuda(mesh, local_elem_box, A, b, params);
+  perform_element_loop_gpu(mesh, local_elem_box, A, b, params);
 }
                       
 }//namespace miniFE

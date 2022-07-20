@@ -5,7 +5,7 @@ Based on https://github.com/Mantevo/miniFE
 ## To build
 
 ```
-$ module load gcc cuda
+$ module load gcc cuda/11.5.2 hip-cuda
 $ cd src
 $ make
 ```
@@ -20,3 +20,17 @@ $ bsub submit.lsf
 2. hipify them
 3. modify the src/Makefile and build the application
 4. Submit a job with the compiled code. Use the given `submit.lsf` as your guide.
+
+See the `solution` directory for an example of how to hipify the files and also rename
+them to not use 'cuda' as part of your variable or user defined function names or file names.
+
+## Note
+You will find a whole bunch of nvtx calls for profiling in the various files, you can choose
+to leave them in or take them out manually. hipify-perl won't remove those. 
+hipcc will still compile (since it uses nvcc underneath) 
+as long as there is a `-l nvToolsExt` during the link step. See the solution's makefile 
+in `solution/src/Makefile` .
+
+You will also see that the output will state that the solution is not verified. This is an issue
+in the original miniFE code also. Don't worry about that. Just work on hipifying and getting it to
+run.

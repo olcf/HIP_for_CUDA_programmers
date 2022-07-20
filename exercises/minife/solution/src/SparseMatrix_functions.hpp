@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 #ifndef _SparseMatrix_functions_hpp_
 #define _SparseMatrix_functions_hpp_
 
@@ -196,7 +197,7 @@ namespace miniFE {
   template<typename MatrixType, typename VectorType>
     __device__ __inline__
     void 
-    sum_into_global_linear_system_cuda(typename MatrixType::GlobalOrdinalType elem_node_ids[Hex8::numNodesPerElem], 
+    sum_into_global_linear_system_gpu(typename MatrixType::GlobalOrdinalType elem_node_ids[Hex8::numNodesPerElem], 
         typename MatrixType::ScalarType elem_diffusion_matrix[Hex8::numNodesPerElem*Hex8::numNodesPerElem],
         typename MatrixType::ScalarType elem_source_vector[Hex8::numNodesPerElem], 
         MatrixType A, VectorType b)
@@ -243,7 +244,7 @@ namespace miniFE {
         }
       }
 
-      sum_into_vector_cuda(Hex8::numNodesPerElem, elem_node_ids, elem_source_vector, b);
+      sum_into_vector_gpu(Hex8::numNodesPerElem, elem_node_ids, elem_source_vector, b);
     }
 
   template<typename MatrixType>
@@ -359,7 +360,7 @@ namespace miniFE {
         if(num_bc_rows>0) {
           std::vector<GlobalOrdinal> bc_rows_vec(bc_rows.begin(),bc_rows.end());
           thrust::device_vector<GlobalOrdinal> d_bc_rows_vec(num_bc_rows);
-          cudaMemcpyAsync(thrust::raw_pointer_cast(&d_bc_rows_vec[0]),&bc_rows_vec[0],sizeof(GlobalOrdinal)*num_bc_rows,cudaMemcpyHostToDevice,CudaManager::s1);
+          hipMemcpyAsync(thrust::raw_pointer_cast(&d_bc_rows_vec[0]),&bc_rows_vec[0],sizeof(GlobalOrdinal)*num_bc_rows,hipMemcpyHostToDevice,GpuManager::s1);
 
           int BLOCK_SIZE=256;
           int MAX_BLOCKS=8192;
@@ -367,11 +368,11 @@ namespace miniFE {
 
           NUM_BLOCKS=min(MAX_BLOCKS,(int)(num_bc_rows+BLOCK_SIZE-1)/BLOCK_SIZE);
           //TODO place in different streams...
-          impose_dirichlet_first_kernel<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(prescribed_value, A.getPOD(), b.getPOD(), thrust::raw_pointer_cast(&d_bc_rows_vec[0]),num_bc_rows,first_local_row,last_local_row);
-          cudaCheckError();
+          hipLaunchKernelGGL(impose_dirichlet_first_kernel, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, prescribed_value, A.getPOD(), b.getPOD(), thrust::raw_pointer_cast(&d_bc_rows_vec[0]),num_bc_rows,first_local_row,last_local_row);
+          gpuCheckError();
           NUM_BLOCKS=min(MAX_BLOCKS,(int)(num_rows+BLOCK_SIZE-1)/BLOCK_SIZE);
-          impose_dirichlet_second_kernel<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(prescribed_value, A.getPOD(), b.getPOD(), thrust::raw_pointer_cast(&d_bc_rows_vec[0]),num_bc_rows);
-          cudaCheckError();
+          hipLaunchKernelGGL(impose_dirichlet_second_kernel, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, prescribed_value, A.getPOD(), b.getPOD(), thrust::raw_pointer_cast(&d_bc_rows_vec[0]),num_bc_rows);
+          gpuCheckError();
         }
       }
 
@@ -487,19 +488,19 @@ namespace miniFE {
 
 #ifndef MATVEC_OVERLAP
           exchange_externals(A, x);
-          matvec_ell_kernel<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(A.getPOD(), x.getPOD(), y.getPOD());
+          hipLaunchKernelGGL(matvec_ell_kernel, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, A.getPOD(), x.getPOD(), y.getPOD());
 #else
           nvtxRangeId_t r1=nvtxRangeStartA("begin exchange");
           begin_exchange_externals(A,x);
           nvtxRangeEnd(r1);
           nvtxRangeId_t r2=nvtxRangeStartA("interier region");
-          matvec_overlap_ell_kernel<INTERNAL><<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(A.getPOD(), x.getPOD(), y.getPOD());
+          hipLaunchKernelGGL(HIP_KERNEL_NAME(matvec_overlap_ell_kernel<INTERNAL>), NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, A.getPOD(), x.getPOD(), y.getPOD());
           nvtxRangeEnd(r2);
           nvtxRangeId_t r3=nvtxRangeStartA("end exchange");
           finish_exchange_externals(A,x);
           nvtxRangeEnd(r3);
           nvtxRangeId_t r4=nvtxRangeStartA("exterier region");
-          matvec_overlap_ell_kernel<EXTERNAL><<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(A.getPOD(), x.getPOD(), y.getPOD());
+          hipLaunchKernelGGL(HIP_KERNEL_NAME(matvec_overlap_ell_kernel<EXTERNAL>), NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, A.getPOD(), x.getPOD(), y.getPOD());
           nvtxRangeEnd(r4);
 #endif
         }

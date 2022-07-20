@@ -39,7 +39,7 @@
 #include <box_utils.hpp>
 #include <Vector.hpp>
 
-#include <CudaELLMatrix.hpp>
+#include <GpuELLMatrix.hpp>
 
 #include <simple_mesh_description.hpp>
 
@@ -73,10 +73,10 @@
     std::cout << msg;               \
     std::cout.flush();              \
   }                                 \
-  cudaDeviceSynchronize();          \
+  hipDeviceSynchronize();          \
   timer_type rtf_t0 = mytimer();    \
   fn;                               \
-  cudaDeviceSynchronize();          \
+  hipDeviceSynchronize();          \
   time_inc = mytimer() - rtf_t0;    \
   time_total += time_inc;           \
   if (myproc==0) {                  \
@@ -175,7 +175,7 @@ driver(const Box& global_box, Box& my_box,
 
   //Declare matrix object:
 
-  typedef CudaELLMatrix<Scalar,LocalOrdinal,GlobalOrdinal> MatrixType;
+  typedef GpuELLMatrix<Scalar,LocalOrdinal,GlobalOrdinal> MatrixType;
 
   MatrixType A;
 

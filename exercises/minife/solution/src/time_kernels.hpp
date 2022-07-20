@@ -34,8 +34,8 @@
 #include <Vector_functions.hpp>
 #include <mytimer.hpp>
 
-#ifdef MINIFE_HAVE_CUDA
-#include <cuda.h>
+#ifdef MINIFE_HAVE_HIP
+#include <hip/hip_runtime.h>
 #endif
 
 namespace miniFE {
@@ -104,8 +104,8 @@ time_kernels(OperatorType& A,
   for(OrdinalType i=0; i<max_iter; ++i) {
     waxpby(one, x, zero, x, p);
   }
-#ifdef MINIFE_HAVE_CUDA
-  cudaThreadSynchronize();
+#ifdef MINIFE_HAVE_HIP
+  hipDeviceSynchronize();
 #endif
   TOCK(tWAXPY);
 
@@ -113,8 +113,8 @@ time_kernels(OperatorType& A,
   for(OrdinalType i=0; i<max_iter; ++i) {
     matvec(A, p, x);
   }
-#ifdef MINIFE_HAVE_CUDA
-  cudaThreadSynchronize();
+#ifdef MINIFE_HAVE_HIP
+  hipDeviceSynchronize();
 #endif
   TOCK(tMATVEC);
 
@@ -123,8 +123,8 @@ time_kernels(OperatorType& A,
   for(OrdinalType i=0; i<max_iter; ++i) {
     xdotp += dot(x, p);
   }
-#ifdef MINIFE_HAVE_CUDA
-  cudaThreadSynchronize();
+#ifdef MINIFE_HAVE_HIP
+  hipDeviceSynchronize();
 #endif
   TOCK(tDOT);
 

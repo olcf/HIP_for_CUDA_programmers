@@ -31,6 +31,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <iostream>
 
 #ifdef HAVE_MPI
 #include <mpi.h>

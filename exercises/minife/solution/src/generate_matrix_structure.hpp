@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 #ifndef _generate_matrix_structure_hpp_
 #define _generate_matrix_structure_hpp_
 
@@ -38,7 +39,7 @@
 #include <SparseMatrix_functions.hpp>
 #include <box_utils.hpp>
 #include <utils.hpp>
-#include <CudaUtils.h>
+#include <GpuUtils.h>
 #ifdef HAVE_MPI
 #include <mpi.h>
 #endif
@@ -226,29 +227,29 @@ generate_matrix_structure(const simple_mesh_description<typename MatrixType::Glo
     BLOCK_SIZE.x=32;
     BLOCK_SIZE.y=8;
     int NUM_BLOCKS=min((num_elems+BLOCK_SIZE.y-1)/BLOCK_SIZE.y,448); 
-    generate_matrix_structure_kernel_old<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(mesh.getPOD(), A.getPOD(), size_x, size_y, size_z);
-    cudaCheckError();
+    hipLaunchKernelGGL(generate_matrix_structure_kernel_old, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, mesh.getPOD(), A.getPOD(), size_x, size_y, size_z);
+    gpuCheckError();
 #else
     int BLOCK_SIZE=128;
     int NUM_BLOCKS=min((num_elems+BLOCK_SIZE-1)/BLOCK_SIZE,448*32); 
-    generate_matrix_structure_kernel<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(mesh.getPOD(), A.getPOD(), size_x, size_y, size_z);
-    cudaCheckError();
+    hipLaunchKernelGGL(generate_matrix_structure_kernel, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, mesh.getPOD(), A.getPOD(), size_x, size_y, size_z);
+    gpuCheckError();
 
 #endif
     //Allocate host arrays
     nvtxRangeId_t r2=nvtxRangeStartA("allocate host memory");
     A.rows.resize(A.d_rows.size());
     A.cols.resize(A.d_cols.size());
-    cudaHostRegister(&A.cols[0],sizeof(GlobalOrdinal)* A.cols.size(), 0);
-    cudaCheckError();
+    hipHostRegister(&A.cols[0],sizeof(GlobalOrdinal)* A.cols.size(), 0);
+    gpuCheckError();
     nvtxRangeEnd(r2);
 
     //TODO see where rows is needed and verify it is...
     //copy rows back to host, this is needed elsewhere
-    cudaMemcpyAsync(&A.rows[0],thrust::raw_pointer_cast(&A.d_rows[0]),sizeof(GlobalOrdinal)*A.rows.size(),cudaMemcpyDeviceToHost,CudaManager::s1);
-    cudaMemcpyAsync(&A.cols[0],thrust::raw_pointer_cast(&A.d_cols[0]),sizeof(GlobalOrdinal)*A.cols.size(),cudaMemcpyDeviceToHost,CudaManager::s1);
-    cudaCheckError();
-    cudaEventRecord(CudaManager::e1, CudaManager::s1);
+    hipMemcpyAsync(&A.rows[0],thrust::raw_pointer_cast(&A.d_rows[0]),sizeof(GlobalOrdinal)*A.rows.size(),hipMemcpyDeviceToHost,GpuManager::s1);
+    hipMemcpyAsync(&A.cols[0],thrust::raw_pointer_cast(&A.d_cols[0]),sizeof(GlobalOrdinal)*A.cols.size(),hipMemcpyDeviceToHost,GpuManager::s1);
+    gpuCheckError();
+    hipEventRecord(GpuManager::e1, GpuManager::s1);
   }
   catch(...) {
     std::cout << "proc " << myproc << " threw an exception in generate_matrix_structure, probably due to running out of memory." << std::endl;

@@ -46,7 +46,7 @@
 #include <utils.hpp>
 #include <driver.hpp>
 #include <YAML_Doc.hpp>
-#include <CudaUtils.h>
+#include <GpuUtils.h>
 #include <omp.h>
 
 #if MINIFE_INFO != 0
@@ -93,12 +93,12 @@ inline void print_box(int myproc, const char* name, const Box& box,
 //vector, then solve the linear-system using Conjugate Gradients.
 //
 
-void setCudaDeviceFromRank(miniFE::Parameters &params) {
+void setGpuDeviceFromRank(miniFE::Parameters &params) {
   char* str;
   int local_rank = 0;
 
   if(params.num_devices<0)
-    cudaGetDeviceCount(&params.num_devices);
+    hipGetDeviceCount(&params.num_devices);
 
   if((str = getenv("MV2_COMM_WORLD_LOCAL_RANK")) != NULL) {
     local_rank = atoi(str);
@@ -118,7 +118,7 @@ void setCudaDeviceFromRank(miniFE::Parameters &params) {
     if(params.device >= params.skip_device) params.device++;
   }
 
-  cudaSetDevice(params.device);
+  hipSetDevice(params.device);
 }
 
 int main(int argc, char** argv) {
@@ -126,16 +126,16 @@ int main(int argc, char** argv) {
   miniFE::get_parameters(argc, argv, params);
 
   int numprocs = 1, myproc = 0;
-  setCudaDeviceFromRank(params);
+  setGpuDeviceFromRank(params);
   miniFE::initialize_mpi(argc, argv, numprocs, myproc);
   if(myproc==0)
     printf(" OMP_NUM_THREADS=%d\n", omp_get_max_threads());
-  cudaDeviceProp info;
+  hipDeviceProp_t info;
   int dev;
-  cudaGetDevice(&dev);
-  cudaGetDeviceProperties(&info, dev);
+  hipGetDevice(&dev);
+  hipGetDeviceProperties(&info, dev);
 
-  miniFE::CudaManager::initialize();
+  miniFE::GpuManager::initialize();
 
 
 
@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
     doc.generateYAML();
   }
 
-  miniFE::CudaManager::finalize();
+  miniFE::GpuManager::finalize();
   miniFE::finalize_mpi();
 
   return return_code;

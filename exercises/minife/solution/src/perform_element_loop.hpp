@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 #ifndef _perform_element_loop_hpp_
 #define _perform_element_loop_hpp_
 //@HEADER
@@ -34,7 +35,7 @@
 #include <box_utils.hpp>
 #include <Hex8_box_utils.hpp>
 #include <Hex8_ElemData.hpp>
-#include <CudaHex8.hpp>
+#include <GpuHex8.hpp>
 namespace miniFE {
 
 template<typename Scalar>
@@ -201,7 +202,7 @@ void element_loop_kernel(
 
     get_elem_node_ids(mesh, elemIDs[eleidx],node_ids);
 
-    sum_into_global_linear_system_cuda(node_ids,  diffusion_matrix, source_vector, A, b);
+    sum_into_global_linear_system_gpu(node_ids,  diffusion_matrix, source_vector, A, b);
 
 #if 0    
     if(eleidx==123) {
@@ -230,7 +231,7 @@ void element_loop_kernel(
 
 template<typename MatrixType, typename VectorType>
 void 
-perform_element_loop_cuda(const simple_mesh_description<typename MatrixType::GlobalOrdinalType>& mesh,
+perform_element_loop_gpu(const simple_mesh_description<typename MatrixType::GlobalOrdinalType>& mesh,
                      const Box& local_elem_box,
                      MatrixType& A, VectorType& b,
                      Parameters& /*params*/
@@ -262,8 +263,8 @@ perform_element_loop_cuda(const simple_mesh_description<typename MatrixType::Glo
 
   //copy elemIds to device
   GlobalOrdinal *d_elemIds;
-  cudaMalloc(&d_elemIds,sizeof(GlobalOrdinal)*num_elems);
-  cudaMemcpyAsync(d_elemIds,&elemIDs[0],sizeof(GlobalOrdinal)*num_elems,cudaMemcpyHostToDevice,CudaManager::s1);
+  hipMalloc(&d_elemIds,sizeof(GlobalOrdinal)*num_elems);
+  hipMemcpyAsync(d_elemIds,&elemIDs[0],sizeof(GlobalOrdinal)*num_elems,hipMemcpyHostToDevice,GpuManager::s1);
 
   std::vector<Scalar> gradients(Hex8::numGaussPointsPerDim * Hex8::numGaussPointsPerDim * Hex8::numGaussPointsPerDim * Hex8::numNodesPerElem * Hex8::spatialDim);
   std::vector<Scalar> psi(Hex8::numNodesPerElem*Hex8::numNodesPerElem);
@@ -277,12 +278,12 @@ perform_element_loop_cuda(const simple_mesh_description<typename MatrixType::Glo
   gauss_pts(Hex8::numGaussPointsPerDim,gp);
 
   //copy gradients and psi to device memory
-  cudaMemcpyAsync(thrust::raw_pointer_cast(&d_gradients[0]),&gradients[0],sizeof(Scalar)*gradients.size(),cudaMemcpyHostToDevice,CudaManager::s1);
-  cudaMemcpyAsync(thrust::raw_pointer_cast(&d_psi[0]),&psi[0],sizeof(Scalar)*psi.size(),cudaMemcpyHostToDevice,CudaManager::s1);
+  hipMemcpyAsync(thrust::raw_pointer_cast(&d_gradients[0]),&gradients[0],sizeof(Scalar)*gradients.size(),hipMemcpyHostToDevice,GpuManager::s1);
+  hipMemcpyAsync(thrust::raw_pointer_cast(&d_psi[0]),&psi[0],sizeof(Scalar)*psi.size(),hipMemcpyHostToDevice,GpuManager::s1);
 
   //copy gauss_pts to constant memory
-  cudaMemcpyToSymbolAsync(Hex8::gauss_pts_c,gp,sizeof(gp),0,cudaMemcpyHostToDevice,CudaManager::s1);
-  cudaCheckError();
+  hipMemcpyToSymbolAsync(HIP_SYMBOL(Hex8::gauss_pts_c),gp,sizeof(gp),0,hipMemcpyHostToDevice,GpuManager::s1);
+  gpuCheckError();
 
   //initialize the source vector to 0's
   thrust::fill(b.d_coefs.begin(),b.d_coefs.end(),0);
@@ -290,13 +291,13 @@ perform_element_loop_cuda(const simple_mesh_description<typename MatrixType::Glo
   const int BLOCK_SIZE=128;
   const int NUM_BLOCKS=min((num_elems+BLOCK_SIZE-1)/BLOCK_SIZE,896); //64 blocks per SM
 
-  cudaThreadSetCacheConfig(cudaFuncCachePreferL1);
-  cudaDeviceSetSharedMemConfig(cudaSharedMemBankSizeEightByte);
+  hipDeviceSetCacheConfig(hipFuncCachePreferL1);
+  hipDeviceSetSharedMemConfig(hipSharedMemBankSizeEightByte);
   
   //call finite-element assembly kernel:
-  element_loop_kernel<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(mesh.getPOD(),num_elems,d_elemIds,A.getPOD(), b.getPOD(), thrust::raw_pointer_cast(&d_gradients[0]), thrust::raw_pointer_cast(&d_psi[0]));
+  hipLaunchKernelGGL(element_loop_kernel, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, mesh.getPOD(),num_elems,d_elemIds,A.getPOD(), b.getPOD(), thrust::raw_pointer_cast(&d_gradients[0]), thrust::raw_pointer_cast(&d_psi[0]));
 
-  cudaCheckError();
+  gpuCheckError();
 
 }
 }//namespace miniFE

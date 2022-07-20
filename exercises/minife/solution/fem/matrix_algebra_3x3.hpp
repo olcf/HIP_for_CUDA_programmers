@@ -35,7 +35,7 @@
 namespace miniFE {
 
 template<typename Scalar>
-#ifdef __HIPCC__
+#ifdef __CUDACC__
   __host__ __device__
 #endif
 KERNEL_PREFIX void fill(Scalar* begin, Scalar* end, const Scalar& val)

@@ -32,6 +32,7 @@
 #include <vector>
 #include <assert.h>
 #include <thrust/device_vector.h>
+#include <hip/hip_runtime.h>
 
 namespace miniFE {
 
@@ -70,19 +71,19 @@ struct Vector {
 
   void copyToDevice(LocalOrdinal startIndex=0) const {
     int size=local_size-startIndex;
-    cudaMemcpy(const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[startIndex])),const_cast<Scalar*>(&coefs[startIndex]),sizeof(ScalarType)*size,cudaMemcpyHostToDevice);
+    hipMemcpy(const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[startIndex])),const_cast<Scalar*>(&coefs[startIndex]),sizeof(ScalarType)*size,hipMemcpyHostToDevice);
   }
   void copyToHost(LocalOrdinal startIndex=0) const {
     int size=local_size-startIndex;
-    cudaMemcpy(const_cast<Scalar*>(&coefs[startIndex]),const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[startIndex])),sizeof(ScalarType)*size,cudaMemcpyDeviceToHost);
+    hipMemcpy(const_cast<Scalar*>(&coefs[startIndex]),const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[startIndex])),sizeof(ScalarType)*size,hipMemcpyDeviceToHost);
   }
-  void copyToDeviceAsync(LocalOrdinal startIndex=0,cudaStream_t s=0) const {
+  void copyToDeviceAsync(LocalOrdinal startIndex=0,hipStream_t s=0) const {
     int size=local_size-startIndex;
-    cudaMemcpyAsync(const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[startIndex])),const_cast<Scalar*>(&coefs[startIndex]),sizeof(ScalarType)*size,cudaMemcpyHostToDevice,s);
+    hipMemcpyAsync(const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[startIndex])),const_cast<Scalar*>(&coefs[startIndex]),sizeof(ScalarType)*size,hipMemcpyHostToDevice,s);
   }
-  void copyToHostAsync(LocalOrdinal startIndex=0,cudaStream_t s=0) const {
+  void copyToHostAsync(LocalOrdinal startIndex=0,hipStream_t s=0) const {
     int size=local_size-startIndex;
-    cudaMemcpyAsync(const_cast<Scalar*>(&coefs[startIndex]),const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[startIndex])),sizeof(ScalarType)*size,cudaMemcpyDeviceToHost,s);
+    hipMemcpyAsync(const_cast<Scalar*>(&coefs[startIndex]),const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[startIndex])),sizeof(ScalarType)*size,hipMemcpyDeviceToHost,s);
   }
 
   PODVector<Scalar,LocalOrdinal,GlobalOrdinal> getPOD() const {

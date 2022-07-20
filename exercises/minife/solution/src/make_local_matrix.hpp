@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 #ifndef _make_local_matrix_hpp_
 #define _make_local_matrix_hpp_
 
@@ -234,39 +235,39 @@ make_local_matrix(MatrixType& A)
   ///////////////////////////////////////////
 
   //Wait for rows and cols to finish transfer
-  cudaEventSynchronize(CudaManager::e1);
+  hipEventSynchronize(GpuManager::e1);
 
   std::vector<GlobalOrdinal>& external_index = A.external_index;
-#define CUDA_MAKE_LOCAL
-#ifdef CUDA_MAKE_LOCAL
+#define GPU_MAKE_LOCAL
+#ifdef GPU_MAKE_LOCAL
   thrust::device_vector<GlobalOrdinal> num_cols_est(1,0);
   int BLOCK_SIZE=512;
   int MAX_BLOCKS=8192;
   int NUM_BLOCKS=min(MAX_BLOCKS,(int)(A.rows.size()+BLOCK_SIZE-1)/BLOCK_SIZE);
 
-  renumberExternalsAndCount<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(A.getPOD(),start_row, stop_row, thrust::raw_pointer_cast(&num_cols_est[0]));
+  hipLaunchKernelGGL(renumberExternalsAndCount, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, A.getPOD(),start_row, stop_row, thrust::raw_pointer_cast(&num_cols_est[0]));
 
   ColMarkMap<GlobalOrdinal> d_map(num_cols_est[0]*20); //TODO tune this multiplier and test
   BLOCK_SIZE=256;
   NUM_BLOCKS=min(MAX_BLOCKS,(int)(d_map.table.size()+BLOCK_SIZE-1)/BLOCK_SIZE);
   
   //insert all external columns into an array
-  markExternalColumnsInMap<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(A.getPOD(),d_map.getPOD());
-  cudaCheckError();
+  hipLaunchKernelGGL(markExternalColumnsInMap, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, A.getPOD(),d_map.getPOD());
+  gpuCheckError();
 
   //sort the map table
   thrust::sort(d_map.table.begin(),d_map.table.end());
-  cudaCheckError();
+  gpuCheckError();
   
   //compute unique elements
   num_external=thrust::unique(d_map.table.begin(),d_map.table.end()) - d_map.table.begin()-1;
-  cudaCheckError();
+  gpuCheckError();
 
   external_index.resize(num_external);
   //printf("external_index.size: %d, d_map.table.size: %d\n",external_index.size(), num_external);
   //copy unique elements external_index (remove first element -1)
-  cudaMemcpy(&external_index[0],thrust::raw_pointer_cast(&d_map.table[1]),num_external*sizeof(GlobalOrdinal),cudaMemcpyDeviceToHost);
-  cudaCheckError();
+  hipMemcpy(&external_index[0],thrust::raw_pointer_cast(&d_map.table[1]),num_external*sizeof(GlobalOrdinal),hipMemcpyDeviceToHost);
+  gpuCheckError();
 #else
   #pragma omp parallel for
   for(size_t i=0; i<A.rows.size(); ++i) {
@@ -364,18 +365,18 @@ make_local_matrix(MatrixType& A)
     }
   }
   nvtxRangeEnd(r01);
-#ifdef CUDA_MAKE_LOCAL
+#ifdef GPU_MAKE_LOCAL
   //copy external_local_index to device
   thrust::device_vector<GlobalOrdinal> d_external_local_index;
   d_external_local_index.assign(external_local_index.begin(),external_local_index.end());
-  cudaCheckError();
+  gpuCheckError();
 
   //renumber externals list
   BLOCK_SIZE=256;
   MAX_BLOCKS=32768;
   NUM_BLOCKS=min(MAX_BLOCKS,(int)(A.rows.size()+BLOCK_SIZE-1)/BLOCK_SIZE);
-  renumberExternals<<<NUM_BLOCKS,BLOCK_SIZE>>>(A.getPOD(), thrust::raw_pointer_cast(&d_map.table[1]), num_external, thrust::raw_pointer_cast(&d_external_local_index[0]));
-  cudaCheckError();
+  hipLaunchKernelGGL(renumberExternals, NUM_BLOCKS, BLOCK_SIZE, 0, 0, A.getPOD(), thrust::raw_pointer_cast(&d_map.table[1]), num_external, thrust::raw_pointer_cast(&d_external_local_index[0]));
+  gpuCheckError();
 
 #else
 
@@ -675,9 +676,9 @@ make_local_matrix(MatrixType& A)
     A.elements_to_send[i] -= start_row;
   }
 
-  cudaMemcpyAsync(thrust::raw_pointer_cast(&A.d_elements_to_send[0]),&A.elements_to_send[0],sizeof(GlobalOrdinal)*A.elements_to_send.size(),cudaMemcpyHostToDevice,CudaManager::s1);
-  cudaCheckError();
-  cudaEventRecord(CudaManager::e1,CudaManager::s1);
+  hipMemcpyAsync(thrust::raw_pointer_cast(&A.d_elements_to_send[0]),&A.elements_to_send[0],sizeof(GlobalOrdinal)*A.elements_to_send.size(),hipMemcpyHostToDevice,GpuManager::s1);
+  gpuCheckError();
+  hipEventRecord(GpuManager::e1,GpuManager::s1);
   //////////////////
   // Finish up !!
   //////////////////
@@ -690,9 +691,9 @@ make_local_matrix(MatrixType& A)
   A.has_local_indices = true;
 
 #ifdef HAVE_MPI
-#ifndef CUDA_MAKE_LOCAL
-  cudaMemcpyAsync(thrust::raw_pointer_cast(&A.d_cols[0]), &A.cols[0], sizeof(GlobalOrdinal)*A.cols.size(),cudaMemcpyHostToDevice,CudaManager::s1);
-  cudaCheckError();
+#ifndef GPU_MAKE_LOCAL
+  hipMemcpyAsync(thrust::raw_pointer_cast(&A.d_cols[0]), &A.cols[0], sizeof(GlobalOrdinal)*A.cols.size(),hipMemcpyHostToDevice,GpuManager::s1);
+  gpuCheckError();
 #endif
 
 #ifdef MATVEC_OVERLAP
@@ -702,8 +703,8 @@ make_local_matrix(MatrixType& A)
     const int MAX_BLOCKS=32768;
 
     const int NUM_BLOCKS=min(MAX_BLOCKS,(int)(A.rows.size()+BLOCK_SIZE-1)/BLOCK_SIZE);
-    createExternalMapping<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(A.getPOD());
-    cudaCheckError();
+    hipLaunchKernelGGL(createExternalMapping, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, A.getPOD());
+    gpuCheckError();
   }
 #endif
 #endif

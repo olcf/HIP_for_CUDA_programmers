@@ -1,0 +1,10 @@
+# Exercises
+
+You can try to hipify the codes in these directories to practice 
+hipifying and debugging your hipified code. The order, from easy to hard, is
+
+1. matrixmultiply
+2. gpu_xgemm_test
+3. mini-nbody-cda
+4. sparkler
+5. minife

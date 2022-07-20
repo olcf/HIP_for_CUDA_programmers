@@ -1,5 +1,5 @@
-#ifndef _CUDAELLMatrix_hpp_
-#define _CUDAELLMatrix_hpp_
+#ifndef _GPUELLMatrix_hpp_
+#define _GPUELLMatrix_hpp_
 
 //@HEADER
 // ************************************************************************
@@ -35,7 +35,7 @@
 #ifdef HAVE_MPI
 #include <mpi.h>
 #endif
-#include <CudaUtils.h>
+#include <GpuUtils.h>
 #include <thrust/device_vector.h>
 #include <nvToolsExt.h>
 namespace miniFE {
@@ -62,8 +62,8 @@ template<typename Scalar,
          typename LocalOrdinal,
          typename GlobalOrdinal>
 struct
-CudaELLMatrix {
-  CudaELLMatrix()
+GpuELLMatrix {
+  GpuELLMatrix()
    : has_local_indices(false),
      rows(),
      cols(), coefs(),
@@ -79,29 +79,29 @@ CudaELLMatrix {
   {
   }
 
-  ~CudaELLMatrix()
+  ~GpuELLMatrix()
   {
-    cudaHostUnregister(&cols[0]);
-    cudaCheckError();
+    hipHostUnregister(&cols[0]);
+    gpuCheckError();
   }
 
   void copyToDevice() const {
     int n=d_coefs.size();
-    cudaMemcpy(const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[0])),const_cast<Scalar*>(&coefs[0]),sizeof(Scalar)*n,cudaMemcpyHostToDevice);
-    cudaCheckError();
-    cudaMemcpy(const_cast<GlobalOrdinal*>(thrust::raw_pointer_cast(&d_cols[0])),const_cast<GlobalOrdinal*>(&cols[0]),sizeof(GlobalOrdinal)*n,cudaMemcpyHostToDevice);
-    cudaCheckError();
-    cudaMemcpy(const_cast<GlobalOrdinal*>(thrust::raw_pointer_cast(&d_rows[0])),const_cast<GlobalOrdinal*>(&rows[0]),sizeof(GlobalOrdinal)*rows.size(),cudaMemcpyHostToDevice);
-    cudaCheckError();
+    hipMemcpy(const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[0])),const_cast<Scalar*>(&coefs[0]),sizeof(Scalar)*n,hipMemcpyHostToDevice);
+    gpuCheckError();
+    hipMemcpy(const_cast<GlobalOrdinal*>(thrust::raw_pointer_cast(&d_cols[0])),const_cast<GlobalOrdinal*>(&cols[0]),sizeof(GlobalOrdinal)*n,hipMemcpyHostToDevice);
+    gpuCheckError();
+    hipMemcpy(const_cast<GlobalOrdinal*>(thrust::raw_pointer_cast(&d_rows[0])),const_cast<GlobalOrdinal*>(&rows[0]),sizeof(GlobalOrdinal)*rows.size(),hipMemcpyHostToDevice);
+    gpuCheckError();
   }
   void copyToHost() const {
     int n=d_coefs.size();
-    cudaMemcpy(const_cast<Scalar*>(&coefs[0]),const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[0])),sizeof(Scalar)*n,cudaMemcpyDeviceToHost);
-    cudaCheckError();
-    cudaMemcpy(const_cast<GlobalOrdinal*>(&cols[0]),const_cast<GlobalOrdinal*>(thrust::raw_pointer_cast(&d_cols[0])),sizeof(GlobalOrdinal)*n,cudaMemcpyDeviceToHost);
-    cudaCheckError();
-    cudaMemcpy(const_cast<GlobalOrdinal*>(&rows[0]),const_cast<GlobalOrdinal*>(thrust::raw_pointer_cast(&d_rows[0])),sizeof(GlobalOrdinal)*rows.size(),cudaMemcpyDeviceToHost);
-    cudaCheckError();
+    hipMemcpy(const_cast<Scalar*>(&coefs[0]),const_cast<Scalar*>(thrust::raw_pointer_cast(&d_coefs[0])),sizeof(Scalar)*n,hipMemcpyDeviceToHost);
+    gpuCheckError();
+    hipMemcpy(const_cast<GlobalOrdinal*>(&cols[0]),const_cast<GlobalOrdinal*>(thrust::raw_pointer_cast(&d_cols[0])),sizeof(GlobalOrdinal)*n,hipMemcpyDeviceToHost);
+    gpuCheckError();
+    hipMemcpy(const_cast<GlobalOrdinal*>(&rows[0]),const_cast<GlobalOrdinal*>(thrust::raw_pointer_cast(&d_rows[0])),sizeof(GlobalOrdinal)*rows.size(),hipMemcpyDeviceToHost);
+    gpuCheckError();
   }
 
   PODELLMatrix<Scalar,LocalOrdinal,GlobalOrdinal> getPOD() {
@@ -172,18 +172,6 @@ CudaELLMatrix {
     d_external_map.resize(nrows);
 #endif
    
-#if 0
-    //These have been moved after kernel launches so they can overlap with work on the device.
-    nvtxRangeId_t r2=nvtxRangeStartA("allocate host memory");
-    rows.resize(nrows);
-    cols.resize(pitch * ncols_per_row);
-    nvtxRangeEnd(r2);
-
-    nvtxRangeId_t r3=nvtxRangeStartA("register host memory");
-    cudaHostRegister(&cols[0],sizeof(GlobalOrdinalType)* pitch * ncols_per_row, 0);
-    cudaCheckError();
-    nvtxRangeEnd(r3);
-#endif
   }
 
   LocalOrdinalType get_local_row(GlobalOrdinalType row) {

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 #ifndef _Vector_functions_hpp_
 #define _Vector_functions_hpp_
 
@@ -39,7 +40,7 @@
 
 #include <TypeTraits.hpp>
 #include <Vector.hpp>
-#include <CudaUtils.h>
+#include <GpuUtils.h>
 namespace miniFE {
 
 template<typename VectorType>
@@ -80,7 +81,7 @@ void write_vector(const std::string& filename,
 
 template<typename VectorType>
 __device__  __inline__
-void sum_into_vector_cuda(size_t num_indices,
+void sum_into_vector_gpu(size_t num_indices,
                      const typename VectorType::GlobalOrdinalType* __restrict__ indices,
                      const typename VectorType::ScalarType* __restrict__ coefs,
                      VectorType& vec)
@@ -160,8 +161,8 @@ void
   int BLOCK_SIZE=256;
   int BLOCKS=min((n+BLOCK_SIZE-1)/BLOCK_SIZE,2048*16);
 
-  waxpby_kernel<<<BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(alpha, x.getPOD(), beta, y.getPOD(), w.getPOD());
-  cudaCheckError();
+  hipLaunchKernelGGL(waxpby_kernel, BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, alpha, x.getPOD(), beta, y.getPOD(), w.getPOD());
+  gpuCheckError();
 }
 
 //-----------------------------------------------------------
@@ -244,26 +245,26 @@ typename TypeTraits<typename Vector::ScalarType>::magnitude_type
  int BLOCK_SIZE=512;
  int NUM_BLOCKS=min(1024,(n+BLOCK_SIZE-1)/BLOCK_SIZE);
  static thrust::device_vector<magnitude> d(1024);
- cudaMemset_custom(thrust::raw_pointer_cast(&d[0]),(magnitude)0,1024,CudaManager::s1);
+ gpuMemset_custom(thrust::raw_pointer_cast(&d[0]),(magnitude)0,1024,GpuManager::s1);
 
- dot_kernel<<<NUM_BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(x.getPOD(), y.getPOD(), thrust::raw_pointer_cast(&d[0]));
- cudaCheckError();
- dot_final_reduce_kernel<<<1,1024,0,CudaManager::s1>>>(thrust::raw_pointer_cast(&d[0]));
- cudaCheckError();
+ hipLaunchKernelGGL(dot_kernel, NUM_BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, x.getPOD(), y.getPOD(), thrust::raw_pointer_cast(&d[0]));
+ gpuCheckError();
+ hipLaunchKernelGGL(dot_final_reduce_kernel, 1, 1024, 0, GpuManager::s1, thrust::raw_pointer_cast(&d[0]));
+ gpuCheckError();
  
  static magnitude result;
 
  //TODO move outside?
  static bool first=true;
  if(first==true) {
-   cudaHostRegister(&result,sizeof(result),0);
+   hipHostRegister(&result,sizeof(result),0);
    first=false;
  }
 
  //TODO do this with GPU direct?
- cudaMemcpyAsync(&result,thrust::raw_pointer_cast(&d[0]),sizeof(magnitude),cudaMemcpyDeviceToHost,CudaManager::s1);
- cudaEventRecord(CudaManager::e1,CudaManager::s1);
- cudaEventSynchronize(CudaManager::e1);
+ hipMemcpyAsync(&result,thrust::raw_pointer_cast(&d[0]),sizeof(magnitude),hipMemcpyDeviceToHost,GpuManager::s1);
+ hipEventRecord(GpuManager::e1,GpuManager::s1);
+ hipEventSynchronize(GpuManager::e1);
 
 #ifdef HAVE_MPI
   nvtxRangeId_t r1=nvtxRangeStartA("MPI All Reduce");

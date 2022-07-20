@@ -1,11 +1,11 @@
 #pragma once
-#include <CudaUtils.h>
+#include <GpuUtils.h>
 
 namespace miniFE {
 
   namespace Hex8 {
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
     __constant__ MINIFE_SCALAR gauss_pts_c[numGaussPointsPerDim];
 #endif
 

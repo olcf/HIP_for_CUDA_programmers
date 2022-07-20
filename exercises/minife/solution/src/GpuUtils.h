@@ -1,6 +1,7 @@
+#include "hip/hip_runtime.h"
 
-#ifndef _H_MINIFE_CUDA_UTILS
-#define _H_MINIFE_CUDA_UTILS
+#ifndef _H_MINIFE_GPU_UTILS
+#define _H_MINIFE_GPU_UTILS
 
 #include <assert.h>
 #include <shfl.h>
@@ -20,10 +21,10 @@ __device__ __inline__ double miniFEAtomicAdd(double* address, double val)
 
 namespace miniFE {
 
-#define cudaCheckError() {                                          \
- cudaError_t e=cudaGetLastError();                                 \
- if(e!=cudaSuccess) {                                              \
-   printf("Cuda failure %s:%d: '%s'\n",__FILE__,__LINE__,cudaGetErrorString(e));           \
+#define gpuCheckError() {                                          \
+ hipError_t e=hipGetLastError();                                 \
+ if(e!=hipSuccess) {                                              \
+   printf("HIP failure %s:%d: '%s'\n",__FILE__,__LINE__,hipGetErrorString(e));           \
    exit(0); \
  }                                                                 \
 }
@@ -147,47 +148,47 @@ template<typename GlobalOrdinal>
     return -1;  
 }
 
-class CudaManager {
+class GpuManager {
   public:
     static void initialize() {
       if(!initialized) {
-        cudaStreamCreate(&s1);
-        cudaStreamCreate(&s2);
-        cudaEventCreateWithFlags(&e1,cudaEventDisableTiming);
-        cudaEventCreateWithFlags(&e2,cudaEventDisableTiming);
+        hipStreamCreate(&s1);
+        hipStreamCreate(&s2);
+        hipEventCreateWithFlags(&e1,hipEventDisableTiming);
+        hipEventCreateWithFlags(&e2,hipEventDisableTiming);
         initialized=true;
       }
     };
     static void finalize() {
       if(initialized) {
-        cudaEventDestroy(e1);
-        cudaEventDestroy(e2);
-        cudaStreamDestroy(s1);
-        cudaStreamDestroy(s2);
+        hipEventDestroy(e1);
+        hipEventDestroy(e2);
+        hipStreamDestroy(s1);
+        hipStreamDestroy(s2);
         initialized=false;
       }
     };
-    static cudaStream_t s1;
-    static cudaStream_t s2;
-    static cudaEvent_t e1;
-    static cudaEvent_t e2;
+    static hipStream_t s1;
+    static hipStream_t s2;
+    static hipEvent_t e1;
+    static hipEvent_t e2;
   private:
     static bool initialized;
 
 };
 
 template<class T> 
-__global__ void cudaMemset_kernel(T* mem, T val, int N) {
+__global__ void gpuMemset_kernel(T* mem, T val, int N) {
   for(int idx=blockIdx.x*blockDim.x+threadIdx.x; idx<N; idx+=blockDim.x*gridDim.x) {
     mem[idx]=val;
   }
 }
 
 template<class T> 
-__inline__ void cudaMemset_custom(T* mem, const T val, int N, cudaStream_t s) {
+__inline__ void gpuMemset_custom(T* mem, const T val, int N, hipStream_t s) {
  int BLOCK_SIZE=512;
  int NUM_BLOCKS=min(8192,(N+BLOCK_SIZE-1)/BLOCK_SIZE);
-  cudaMemset_kernel<<<NUM_BLOCKS,BLOCK_SIZE,0,s>>>(mem,val,N);
+  hipLaunchKernelGGL(gpuMemset_kernel, NUM_BLOCKS, BLOCK_SIZE, 0, s, mem,val,N);
 }
 
 template<int Mark> 
@@ -195,7 +196,7 @@ __global__ void Marker_kernel() {}
 
 template<int Mark>
 void Marker() {
-  Marker_kernel<Mark><<<1,1>>>();
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(Marker_kernel<Mark>), 1, 1, 0, 0);
 }
 
 }

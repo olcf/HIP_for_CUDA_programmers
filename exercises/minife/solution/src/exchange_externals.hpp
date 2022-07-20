@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 #ifndef _exchange_externals_hpp_
 #define _exchange_externals_hpp_
 
@@ -99,19 +100,19 @@ exchange_externals(MatrixType& A,
   int BLOCK_SIZE=256;
   int BLOCKS=min((int)(A.d_elements_to_send.size()+BLOCK_SIZE-1)/BLOCK_SIZE,2048);
 
-  copyElementsToBuffer<<<BLOCKS,BLOCK_SIZE,0,CudaManager::s1>>>(thrust::raw_pointer_cast(&x.d_coefs[0]),
+  hipLaunchKernelGGL(copyElementsToBuffer, BLOCKS, BLOCK_SIZE, 0, GpuManager::s1, thrust::raw_pointer_cast(&x.d_coefs[0]),
                                      thrust::raw_pointer_cast(&A.d_send_buffer[0]), 
                                      thrust::raw_pointer_cast(&A.d_elements_to_send[0]),
                                      A.d_elements_to_send.size());
-  cudaCheckError();
+  gpuCheckError();
 
 #ifndef GPUDIRECT
   std::vector<Scalar>& send_buffer = A.send_buffer;
   //wait for packing to finish
-  cudaMemcpyAsync(&send_buffer[0],thrust::raw_pointer_cast(&A.d_send_buffer[0]),sizeof(Scalar)*A.d_elements_to_send.size(),cudaMemcpyDeviceToHost,CudaManager::s1);
-  cudaCheckError();
+  hipMemcpyAsync(&send_buffer[0],thrust::raw_pointer_cast(&A.d_send_buffer[0]),sizeof(Scalar)*A.d_elements_to_send.size(),hipMemcpyDeviceToHost,GpuManager::s1);
+  gpuCheckError();
 #endif
-  cudaEventRecord(CudaManager::e1,CudaManager::s1);
+  hipEventRecord(GpuManager::e1,GpuManager::s1);
 
 #ifdef GPUDIRECT
   Scalar * x_external = thrust::raw_pointer_cast(&x.d_coefs[local_nrow]);
@@ -145,8 +146,8 @@ exchange_externals(MatrixType& A,
   Scalar* s_buffer = &send_buffer[0];
 #endif
   //wait for packing or copy to host to finish
-  cudaEventSynchronize(CudaManager::e1);
-  cudaCheckError();
+  hipEventSynchronize(GpuManager::e1);
+  gpuCheckError();
 
   for(int i=0; i<num_neighbors; ++i) {
     int n_send = send_length[i];
@@ -172,7 +173,7 @@ exchange_externals(MatrixType& A,
   }
   
 #ifndef GPUDIRECT
-  x.copyToDeviceAsync(local_nrow,CudaManager::s1);
+  x.copyToDeviceAsync(local_nrow,GpuManager::s1);
 #endif
 
 #ifdef MINIFE_DEBUG
@@ -248,22 +249,22 @@ begin_exchange_externals(MatrixType& A,
   int BLOCK_SIZE=256;
   int BLOCKS=min((int)(A.d_elements_to_send.size()+BLOCK_SIZE-1)/BLOCK_SIZE,2048);
 
-  cudaEventRecord(CudaManager::e1,CudaManager::s1);
-  cudaStreamWaitEvent(CudaManager::s2,CudaManager::e1,0);
+  hipEventRecord(GpuManager::e1,GpuManager::s1);
+  hipStreamWaitEvent(GpuManager::s2,GpuManager::e1,0);
 
-  copyElementsToBuffer<<<BLOCKS,BLOCK_SIZE,0,CudaManager::s2>>>(thrust::raw_pointer_cast(&x.d_coefs[0]),
+  hipLaunchKernelGGL(copyElementsToBuffer, BLOCKS, BLOCK_SIZE, 0, GpuManager::s2, thrust::raw_pointer_cast(&x.d_coefs[0]),
                                      thrust::raw_pointer_cast(&A.d_send_buffer[0]), 
                                      thrust::raw_pointer_cast(&A.d_elements_to_send[0]),
                                      A.d_elements_to_send.size());
-  cudaCheckError();
+  gpuCheckError();
   //This isn't necessary for correctness but I want to make sure this starts before the interrior kernel
-  cudaStreamWaitEvent(CudaManager::s1,CudaManager::e2,0); 
+  hipStreamWaitEvent(GpuManager::s1,GpuManager::e2,0); 
 #ifndef GPUDIRECT
   std::vector<Scalar>& send_buffer = A.send_buffer;
-  cudaMemcpyAsync(&send_buffer[0],thrust::raw_pointer_cast(&A.d_send_buffer[0]),sizeof(Scalar)*A.d_elements_to_send.size(),cudaMemcpyDeviceToHost,CudaManager::s2);
-  cudaCheckError();
+  hipMemcpyAsync(&send_buffer[0],thrust::raw_pointer_cast(&A.d_send_buffer[0]),sizeof(Scalar)*A.d_elements_to_send.size(),hipMemcpyDeviceToHost,GpuManager::s2);
+  gpuCheckError();
 #endif
-  cudaEventRecord(CudaManager::e2,CudaManager::s2);
+  hipEventRecord(GpuManager::e2,GpuManager::s2);
 
 #endif
 }
@@ -296,8 +297,8 @@ finish_exchange_externals(MatrixType &A, VectorType &x)
 #endif
   
   //wait for packing or copy to host to finish
-  cudaEventSynchronize(CudaManager::e2);
-  cudaCheckError();
+  hipEventSynchronize(GpuManager::e2);
+  gpuCheckError();
 
   for(int i=0; i<num_neighbors; ++i) {
     int n_send = send_length[i];

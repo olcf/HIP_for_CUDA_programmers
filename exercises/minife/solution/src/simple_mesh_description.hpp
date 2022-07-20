@@ -72,7 +72,7 @@ struct PODMesh
 
 
 template<typename GlobalOrdinal>
-struct cuda_map_ids_to_rows {
+struct gpu_map_ids_to_rows {
 
   thrust::device_vector<GlobalOrdinal> d_rows;
   thrust::device_vector<GlobalOrdinal> d_ids;
@@ -91,8 +91,8 @@ struct cuda_map_ids_to_rows {
     d_ids.resize(size);
     d_rows.resize(size);
 
-    cudaMemcpyAsync(thrust::raw_pointer_cast(&d_ids[0]),&ids[0],size*sizeof(GlobalOrdinal),cudaMemcpyHostToDevice,CudaManager::s1);
-    cudaMemcpyAsync(thrust::raw_pointer_cast(&d_rows[0]),&rows[0],size*sizeof(GlobalOrdinal),cudaMemcpyHostToDevice,CudaManager::s1);
+    hipMemcpyAsync(thrust::raw_pointer_cast(&d_ids[0]),&ids[0],size*sizeof(GlobalOrdinal),hipMemcpyHostToDevice,GpuManager::s1);
+    hipMemcpyAsync(thrust::raw_pointer_cast(&d_rows[0]),&rows[0],size*sizeof(GlobalOrdinal),hipMemcpyHostToDevice,GpuManager::s1);
   }
   PODMap<GlobalOrdinal> getPOD() const {
     PODMap<GlobalOrdinal> ret;
@@ -129,7 +129,7 @@ public:
     create_map_id_to_row(max_node_x, max_node_y, max_node_z, local_node_box,
         map_ids_to_rows);
 
-    cuda_map.set_map(map_ids_to_rows);
+    gpu_map.set_map(map_ids_to_rows);
 
 
     //As described in analytic_soln.hpp,
@@ -308,12 +308,12 @@ public:
 
     copy_box(local_box, ret.local_box);
 
-    ret.map_ids_to_rows=cuda_map.getPOD();
+    ret.map_ids_to_rows=gpu_map.getPOD();
 
     return ret;
   }
 
-  cuda_map_ids_to_rows<GlobalOrdinal> cuda_map;
+  gpu_map_ids_to_rows<GlobalOrdinal> gpu_map;
 
   std::set<GlobalOrdinal> bc_rows_0;
   std::set<GlobalOrdinal> bc_rows_1;

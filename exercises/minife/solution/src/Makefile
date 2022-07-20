@@ -12,29 +12,19 @@ MINIFE_MATRIX_TYPE = -DMINIFE_ELL_MATRIX
 CFLAGS = -O3
 CXXFLAGS = -O3
 
-# For debugging, the macro MINIFE_DEBUG will cause miniFE to dump a log file
-# from each proc containing various information.
-# This macro will also enable a somewhat expensive range-check on indices in
-# the exchange_externals function.
-
-#CPPFLAGS = -I. -I../utils -I../fem $(MINIFE_TYPES) $(MINIFE_MATRIX_TYPE) -DHAVE_MPI -DMPICH_IGNORE_CXX_SEEK  #-DMINIFE_DEBUG
-CPPFLAGS = -I. -I../utils -I../fem $(MINIFE_TYPES) $(MINIFE_MATRIX_TYPE) -DHAVE_MPI -DMPICH_IGNORE_CXX_SEEK -DMATVEC_OVERLAP #-DGPUDIRECT #-DMINIFE_DEBUG
-#CPPFLAGS = -I. -I../utils -I../fem $(MINIFE_TYPES) $(MINIFE_MATRIX_TYPE) #-DHAVE_MPI -DMPICH_IGNORE_CXX_SEEK -DMATVEC_OVERLAP #-DGPUDIRECT #-DMATVEC_OVERLAP #-DMINIFE_DEBUG
-#CPPFLAGS = -I. -I../utils -I../fem $(MINIFE_TYPES) $(MINIFE_MATRIX_TYPE) -DHAVE_MPI -DMPICH_IGNORE_CXX_SEEK -DGPUDIRECT -DMATVEC_OVERLAP #-DMINIFE_DEBUG
+CPPFLAGS = -I. -I../utils -I../fem $(MINIFE_TYPES) $(MINIFE_MATRIX_TYPE) -DHAVE_MPI -DMPICH_IGNORE_CXX_SEEK -DMATVEC_OVERLAP -DMINIFE_HAVE_HIP
 
 LDFLAGS= 
 LIBS= -l nvToolsExt
-
-
 
 #openmpi
 MPICFLAGS=-I$(OMPI_DIR)/include -pthread 
 #MPILDFLAGS=-L$(OMPI_DIR)/lib -lmpi_ibm -lmpi_cxx -ldl -lm -lrt -lnsl -lutil -lm -ldl
 MPILDFLAGS=-L$(OMPI_DIR)/lib -lmpi_ibm 
 
-NVCCFLAGS=-lineinfo -gencode=arch=compute_70,code=\"sm_70,compute_70\" #-gencode=arch=compute_20, 
+NVCCFLAGS=-gencode=arch=compute_70,code=\"sm_70,compute_70\" 
 
-NVCC=nvcc -Xcompiler -fopenmp 
+GPUCC=hipcc -Xcompiler -fopenmp 
 CXX=mpicxx
 CC=mpicc
 

@@ -47,7 +47,7 @@ void print_vec(const std::vector<Scalar>& vec, const std::string& name)
   }
 }
 template<typename Scalar>
-void print_cuda_vec(const thrust::device_vector<Scalar>& vec, const std::string& name)
+void print_gpu_vec(const thrust::device_vector<Scalar>& vec, const std::string& name)
 {
   for(size_t i=0; i<vec.size(); ++i) {
     std::cout << name << "["<<i<<"]: " << vec[i] << std::endl;
@@ -120,10 +120,10 @@ cg_solve(OperatorType& A,
 #ifdef HAVE_MPI
 #ifndef GPUDIRECT
   //TODO move outside?
-  cudaHostRegister(&p.coefs[0],ncols*sizeof(typename VectorType::ScalarType),0);
-  cudaCheckError();
-  if(A.send_buffer.size()>0) cudaHostRegister(&A.send_buffer[0],A.send_buffer.size()*sizeof(typename VectorType::ScalarType),0);
-  cudaCheckError();
+  hipHostRegister(&p.coefs[0],ncols*sizeof(typename VectorType::ScalarType),0);
+  gpuCheckError();
+  if(A.send_buffer.size()>0) hipHostRegister(&A.send_buffer[0],A.send_buffer.size()*sizeof(typename VectorType::ScalarType),0);
+  gpuCheckError();
 #endif
 #endif
 
@@ -218,10 +218,10 @@ cg_solve(OperatorType& A,
 #ifdef HAVE_MPI
 #ifndef GPUDIRECT
   //TODO move outside?
-  cudaHostUnregister(&p.coefs[0]);
-  cudaCheckError();
-  if(A.send_buffer.size()>0) cudaHostUnregister(&A.send_buffer[0]);
-  cudaCheckError();
+  hipHostUnregister(&p.coefs[0]);
+  gpuCheckError();
+  if(A.send_buffer.size()>0) hipHostUnregister(&A.send_buffer[0]);
+  gpuCheckError();
 #endif
 #endif
 
