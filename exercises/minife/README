@@ -4,9 +4,19 @@ Based on https://github.com/Mantevo/miniFE
 
 ## To build
 
+```
 $ module load gcc cuda
 $ cd src
 $ make
+```
 
 ## To run a test
+```
 $ bsub submit.lsf
+```
+
+## Task
+1. Identify files in the `src`, `utils`, `fem` directories to be hipified
+2. hipify them
+3. modify the src/Makefile and build the application
+4. Submit a job with the compiled code. Use the given `submit.lsf` as your guide.

@@ -1,4 +1,4 @@
-GPUCOMP  = hipcc -ccbin xlc++_r 
+GPUCOMP  = hipcc  
 BLAS = hipblas
 
 INCLUDES  = -I$(OLCF_ESSL_ROOT)/include -I$(OLCF_HIP_CUDA_ROOT)/include
@@ -8,7 +8,8 @@ cpu_gpu_dgemm_hip: cpu_gpu_dgemm_hip.o
 	$(GPUCOMP) $(LIBRARIES) cpu_gpu_dgemm_hip.o -o cpu_gpu_dgemm_hip
 
 cpu_gpu_dgemm_hip.o: cpu_gpu_dgemm_hip.cpp
-	$(GPUCOMP) -Xcompiler -x -Xcompiler c++  $(INCLUDES) -c cpu_gpu_dgemm_hip.cpp
+	$(GPUCOMP) $(INCLUDES) -c cpu_gpu_dgemm_hip.cpp
+#	$(GPUCOMP) -w $(INCLUDES) -c cpu_gpu_dgemm_hip.cpp
 
 .PHONY: clean
 

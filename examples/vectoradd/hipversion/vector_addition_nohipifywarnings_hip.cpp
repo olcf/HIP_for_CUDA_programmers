@@ -56,8 +56,8 @@ int main()
   	// Check for errors on the GPU after control is returned to CPU
 	hipError_t deviceErrAsync = hipDeviceSynchronize();
 
-	if (deviceErrSync != hipSuccess) { printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(deviceErrSync)); exit(0); }
-	if (deviceErrAsync != hipSuccess) { printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(deviceErrAsync)); exit(0); }
+	if (deviceErrSync != hipSuccess) { printf("HIP Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(deviceErrSync)); exit(0); }
+	if (deviceErrAsync != hipSuccess) { printf("HIP Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(deviceErrAsync)); exit(0); }
 
 	// Copy data from device array d_C to host array C
 	hipMemcpy(C, d_C, bytes, hipMemcpyDeviceToHost);

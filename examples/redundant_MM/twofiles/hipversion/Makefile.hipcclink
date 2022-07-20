@@ -1,5 +1,5 @@
-#GPUCOMP  = hipcc 
-GPUCOMP  = hipcc -ccbin xlc++_r 
+GPUCOMP  = hipcc 
+#GPUCOMP  = hipcc -ccbin xlc++_r 
 MPICOMP = mpicxx
 
 INCLUDES  = -I${OLCF_ESSL_ROOT}/include -I${OLCF_HIP_CUDA_ROOT}/include 
@@ -9,8 +9,8 @@ redundant_mm: redundant_MM.o redundant_MM_gpu.o
 	${GPUCOMP} ${LIBRARIES} redundant_MM.o redundant_MM_gpu.o -o redundant_mm 
 
 redundant_MM_gpu.o: redundant_MM_gpu.cpp
-#	${GPUCOMP} ${INCLUDES} -o redundant_MM_gpu.o -c redundant_MM_gpu.cpp
-	${GPUCOMP} -Xcompiler -x -Xcompiler c++  ${INCLUDES} -o redundant_MM_gpu.o -c redundant_MM_gpu.cpp
+	${GPUCOMP} ${INCLUDES} -o redundant_MM_gpu.o -c redundant_MM_gpu.cpp
+#	${GPUCOMP} -Xcompiler -x -Xcompiler c++  ${INCLUDES} -o redundant_MM_gpu.o -c redundant_MM_gpu.cpp
 
 redundant_MM.o: redundant_MM.cpp
 	${MPICOMP} ${INCLUDES} -o redundant_MM.o -c redundant_MM.cpp

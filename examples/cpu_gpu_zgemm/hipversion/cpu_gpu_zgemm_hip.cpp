@@ -8,7 +8,9 @@ Written by Tom Papatheodore
 #include <stdio.h>
 #include <essl.h>
 #include <hipblas.h>
+#ifdef USE_CUDA
 #include <cublas_v2.h>
+#endif 
 #include <hip/hip_complex.h>
 #include <complex.h>
 

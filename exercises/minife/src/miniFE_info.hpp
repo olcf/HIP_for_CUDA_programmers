@@ -1,7 +1,7 @@
 #ifndef miniFE_info_hpp
 #define miniFE_info_hpp
 
-#define MINIFE_HOSTNAME "login5"
+#define MINIFE_HOSTNAME "login3"
 #define MINIFE_KERNEL_NAME "'Linux'"
 #define MINIFE_KERNEL_RELEASE "'4.18.0-193.46.1.el8_2.ppc64le'"
 #define MINIFE_PROCESSOR "'ppc64le'"

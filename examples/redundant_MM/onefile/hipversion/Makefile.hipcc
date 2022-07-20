@@ -1,5 +1,5 @@
-#GPUCOMP  = hipcc 
-GPUCOMP  = hipcc -ccbin xlc++_r
+GPUCOMP  = hipcc 
+#GPUCOMP  = hipcc -ccbin xlc++_r
 #GPUCOMP  = hipcc -ccbin pgc++ 
 
 INCLUDES  = -I$(OMPI_DIR)/include -I$(OLCF_ESSL_ROOT)/include -I$(OLCF_HIP_CUDA_ROOT)/include
@@ -10,7 +10,7 @@ redundant_mm: redundant_MM.o
 
 redundant_MM.o: redundant_MM.cpp
 	$(GPUCOMP) $(INCLUDES) -c redundant_MM.cpp 
-#	$(GPUCOMP) -Xcompiler -x -Xcompiler c++ $(INCLUDES) -c redundant_MM.cpp 
+#	$(GPUCOMP) -Xcompiler -x -Xcompiler c++ -Xcompiler -std=c++11 $(INCLUDES) -c redundant_MM.cpp 
 
 .PHONY: clean cleanall
 

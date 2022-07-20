@@ -4,9 +4,14 @@ Based on https://github.com/Mantevo/miniFE
 
 ## To build
 
-$ module load gcc cuda
+```
+$ module load gcc cuda/11.5.2 hip-cuda
 $ cd src
 $ make
+```
 
 ## To run a test
+
+```
 $ bsub submit.lsf
+```

@@ -1,7 +1,7 @@
 #include "hip/hip_runtime.h"
 #include <stdio.h>
 
-// Macro for checking errors in CUDA API calls
+// Macro for checking errors in HIP API calls
 #define gpuErrorCheck(call)                                                              \
 do{                                                                                       \
     hipError_t gpuErr = call;                                                             \
@@ -51,7 +51,7 @@ int main()
 	gpuErrorCheck( hipMemcpy(d_B, B, bytes, hipMemcpyHostToDevice) );
 
 	// Set execution configuration parameters
-	//		thr_per_blk: number of CUDA threads per grid block
+	//		thr_per_blk: number of HIP threads per grid block
 	//		blk_in_grid: number of blocks in grid
 	int thr_per_blk = 256;
 	int blk_in_grid = ceil( float(N) / thr_per_blk );
@@ -65,8 +65,8 @@ int main()
   	// Check for errors on the GPU after control is returned to CPU
 	hipError_t gpuErrAsync = hipDeviceSynchronize();
 
-	if (gpuErrSync != hipSuccess) { printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErrSync)); exit(0); }
-	if (gpuErrAsync != hipSuccess) { printf("CUDA Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErrAsync)); exit(0); }
+	if (gpuErrSync != hipSuccess) { printf("HIP Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErrSync)); exit(0); }
+	if (gpuErrAsync != hipSuccess) { printf("HIP Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErrAsync)); exit(0); }
 
 	// Copy data from device array d_C to host array C
 	gpuErrorCheck( hipMemcpy(C, d_C, bytes, hipMemcpyDeviceToHost) );

@@ -5,8 +5,8 @@ LIBRARIES =  -L$(OLCF_ESSL_ROOT)/lib64 -L$(OLCF_CUDA_ROOT)/lib64  -lessl -lcubla
 CUFLAGS = -x cu
 
 redundant_mm: redundant_MM.cpp
-	env OMPI_CXX=nvcc $(MPICOMP)  $(CUFLAGS) $(INCLUDES) $(LIBRARIES) redundant_MM.cpp -o redundant_mm
-#	env OMPI_CXX=nvcc $(MPICOMP) -showme  $(CUFLAGS) $(INCLUDES) $(LIBRARIES) redundant_MM.cpp -o redundant_mm
+#	env OMPI_CXX="nvcc -ccbin xlc++_r" $(MPICOMP)  $(CUFLAGS) $(INCLUDES) $(LIBRARIES) redundant_MM.cpp -o redundant_mm
+	env OMPI_CXX=nvcc $(MPICOMP) -showme  $(CUFLAGS) $(INCLUDES) $(LIBRARIES) redundant_MM.cpp -o redundant_mm
 
 
 .PHONY: clean cleanall

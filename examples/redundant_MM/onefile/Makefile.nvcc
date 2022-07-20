@@ -1,4 +1,5 @@
 CUCOMP  = nvcc
+#CUCOMP  = nvcc -ccbin xlc++_r
 CUFLAGS = -arch=sm_70
 
 INCLUDES  = -I$(OMPI_DIR)/include -I$(OLCF_ESSL_ROOT)/include

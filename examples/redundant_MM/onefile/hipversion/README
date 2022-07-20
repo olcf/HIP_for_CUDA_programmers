@@ -29,7 +29,7 @@ Compiling
 ---------
 If you wish to compile with xl as the underlying compiler, also 
 modify the Makefile to use `hipcc -ccbin xlc++_r`
-and also make sure to pass the `-Xcompiler -x -Xcompiler c++` 
+and also make sure to pass the `-Xcompiler -x -Xcompiler c++ -Xcompiler -std=c++11` 
 to the hipcc during the GPU code compilation. See
 the Makefiles for an example.
 
