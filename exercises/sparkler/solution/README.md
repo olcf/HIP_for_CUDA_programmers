@@ -26,8 +26,8 @@ For crusher load `module load rocm openblas/0.3.17-omp`
 
 To build for Summit, run `./make.sh` for CUDA GPU build, or `env USE_GPU=NO ./make.sh`
 for the CPU only build. 
-To build for Crusher, do the same as above. The crusher version will use openblas instead of
-ESSL for the CPU version.
+To build for Crusher, do the same as above while logged into Crusher.
+ The crusher version will use openblas instead of ESSL for the CPU version.
 
 ## Running
 

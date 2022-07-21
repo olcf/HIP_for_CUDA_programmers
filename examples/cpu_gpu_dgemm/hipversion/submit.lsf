@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #BSUB -P STF007
+#BSUB -U HIPforCUDA
 #BSUB -J cpu_gpu_dgemm 
 #BSUB -o cpu_gpu_dgemm.%J
 #BSUB -nnodes 1

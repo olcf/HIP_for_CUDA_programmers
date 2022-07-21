@@ -1,6 +1,7 @@
 #!/bin/bash
 # Begin LSF Directives
 #BSUB -P STF007 
+#BSUB -U HIPforCUDA
 #BSUB -N
 #BSUB -W 0:10
 #BSUB -q batch 

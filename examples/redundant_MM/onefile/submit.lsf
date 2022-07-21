@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #BSUB -P STF007
+#BSUB -U HIPforCUDA
 #BSUB -W 10
 #BSUB -nnodes 1
 #BSUB -J mat_mul

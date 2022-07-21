@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #BSUB -P STF007
+#BSUB -U HIPforCUDA
 #BSUB -J multiply_matrices
 #BSUB -o multiply_matrices.%J
 #BSUB -nnodes 1

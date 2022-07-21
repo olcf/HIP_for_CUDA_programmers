@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #BSUB -P STF007
+#BSUB -U HIPforCUDA
 #BSUB -J mini_nbody
 #BSUB -o mini_nbody.%J
 #BSUB -nnodes 1

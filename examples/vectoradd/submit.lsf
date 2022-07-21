@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #BSUB -P PROJ123
+#BSUB -U HIPforCUDA
 #BSUB -J vectoradd 
 #BSUB -o vectoradd.%J
 #BSUB -nnodes 1
